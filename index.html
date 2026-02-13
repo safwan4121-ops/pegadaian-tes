@@ -1,0 +1,86 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PawnSmart: Financial Decision Simulator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="container" class="container">
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen">
+            <h1 class="title animate-title">PawnSmart</h1>
+            <p class="subtitle">Financial Decision Simulator</p>
+            <button id="start-btn" class="btn primary">Mulai Simulasi</button>
+            <button id="learn-btn" class="btn secondary">Pelajari Materi</button>
+            <button id="leaderboard-btn" class="btn secondary">Leaderboard</button>
+            <button id="dark-mode-toggle" class="btn toggle">Toggle Dark Mode</button>
+        </div>
+
+        <!-- Learn Material Screen -->
+        <div id="learn-screen" class="screen hidden">
+            <h2>Pelajari Materi</h2>
+            <div class="material">
+                <h3>Apa itu Pegadaian?</h3>
+                <p>Pegadaian adalah lembaga keuangan yang memberikan pinjaman dengan jaminan barang berharga.</p>
+                <h3>Konsep Bunga Sederhana</h3>
+                <p>Bunga = Pokok x Tingkat Bunga x Waktu</p>
+                <!-- Tambahkan lebih banyak materi jika diperlukan -->
+            </div>
+            <button id="back-to-start-learn" class="btn back">Kembali</button>
+        </div>
+
+        <!-- Leaderboard Screen -->
+        <div id="leaderboard-screen" class="screen hidden">
+            <h2>Leaderboard</h2>
+            <ul id="leaderboard-list"></ul>
+            <button id="back-to-start-leader" class="btn back">Kembali</button>
+        </div>
+
+        <!-- Simulation Screen -->
+        <div id="simulation-screen" class="screen hidden">
+            <div class="header">
+                <h2 id="level-title"></h2>
+                <div class="progress">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                <p>Skor: <span id="score">0</span> | XP: <span id="xp">0</span></p>
+            </div>
+            <div id="question-container" class="card"></div>
+            <div id="feedback" class="feedback hidden"></div>
+            <button id="next-btn" class="btn primary hidden">Lanjut</button>
+            <button id="retry-btn" class="btn secondary hidden">Coba Lagi</button>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen" class="screen hidden">
+            <h2>Simulasi Selesai!</h2>
+            <p>Skor Akhir: <span id="final-score"></span></p>
+            <p>Kategori: <span id="category"></span></p>
+            <div id="badges"></div>
+            <button id="restart-btn" class="btn primary">Main Lagi</button>
+            <button id="back-to-start-end" class="btn secondary">Kembali ke Menu</button>
+        </div>
+
+        <!-- Kalkulator Bunga -->
+        <div id="calculator" class="hidden">
+            <h3>Kalkulator Bunga Sederhana</h3>
+            <input type="number" id="principal" placeholder="Pokok Pinjaman (Rp)">
+            <input type="number" id="rate" placeholder="Bunga per Bulan (%)">
+            <input type="number" id="time" placeholder="Waktu (Bulan)">
+            <button id="calc-btn" class="btn">Hitung</button>
+            <p>Hasil: <span id="calc-result"></span></p>
+        </div>
+    </div>
+
+    <audio id="success-sound" src="assets/sounds/success.mp3"></audio>
+    <audio id="error-sound" src="assets/sounds/error.mp3"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>

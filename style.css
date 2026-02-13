@@ -1,0 +1,167 @@
+/* style.css */
+
+/* General Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f4f7fa;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 800px;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.screen {
+    text-align: center;
+}
+
+.hidden {
+    display: none;
+}
+
+.btn {
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+.primary {
+    background-color: #1E88E5;
+    color: white;
+}
+
+.secondary {
+    background-color: #e0e0e0;
+}
+
+.back {
+    background-color: #ccc;
+}
+
+.toggle {
+    background-color: #333;
+    color: white;
+}
+
+.btn:hover {
+    transform: scale(1.05);
+}
+
+.btn:focus {
+    outline: 2px solid #1E88E5;
+}
+
+/* Title Animation */
+.title {
+    font-size: 48px;
+    color: #1E88E5;
+}
+
+.animate-title {
+    animation: fadeIn 1s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.subtitle {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+/* Card UI */
+.card {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Progress Bar */
+.progress {
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    height: 10px;
+    margin: 10px 0;
+}
+
+.progress-bar {
+    background-color: #1E88E5;
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s;
+}
+
+/* Feedback */
+.feedback {
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.correct {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.wrong {
+    background-color: #f44336;
+    color: white;
+}
+
+/* Dark Mode */
+.dark-mode {
+    background-color: #121212;
+    color: #fff;
+}
+
+.dark-mode .card {
+    background-color: #1e1e1e;
+}
+
+.dark-mode .btn.secondary {
+    background-color: #333;
+}
+
+.dark-mode .progress {
+    background-color: #333;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .title {
+        font-size: 36px;
+    }
+    .subtitle {
+        font-size: 18px;
+    }
+    .btn {
+        width: 100%;
+    }
+}
+
+/* Accessibility */
+[role="button"] {
+    cursor: pointer;
+}
