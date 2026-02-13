@@ -1,231 +1,73 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PawnStorm: Advanced Financial Decision Simulator</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(to bottom, #001f3f, #4b0082); /* Navy to deep purple */
-            color: #ffffff;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 800px;
-            background: rgba(255, 255, 255, 0.1); /* Glassmorphism effect */
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 40px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        h1 {
-            text-align: center;
-            color: #00ffcc; /* Neon accent */
-            text-shadow: 0 0 10px #00ffcc;
-        }
-        h2 {
-            color: #ffd700; /* Gold for sections */
-            border-bottom: 2px solid #00ffcc;
-            padding-bottom: 10px;
-            margin-top: 40px;
-        }
-        p, ul {
-            line-height: 1.6;
-            font-size: 16px;
-        }
-        ul {
-            list-style-type: none;
-            padding-left: 0;
-        }
-        li {
-            margin-bottom: 10px;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            transition: transform 0.3s ease;
-        }
-        li:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 15px rgba(0, 255, 204, 0.5); /* Neon hover */
-        }
-        .tagline {
-            text-align: center;
-            font-style: italic;
-            color: #ffcc00;
-            margin-bottom: 40px;
-        }
-        .emoji {
-            font-size: 24px;
-            margin-right: 10px;
-        }
-        button {
-            background: #00ffcc;
-            color: #001f3f;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-        }
-        button:hover {
-            background: #ffcc00;
-            box-shadow: 0 0 10px #ffcc00;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 50px;
-            font-size: 14px;
-            color: #cccccc;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <h1>PawnStorm: Advanced Financial Decision Simulator</h1>
         <p class="tagline">Think Fast. Calculate Smart. Manage Risk.</p>
 
-        <h2>🧠 KONSEP LEVEL PROYEK</h2>
-        <p>Game ini bukan sekadar quiz. Ini simulasi pengambilan keputusan finansial berbasis:</p>
-        <ul>
-            <li>Teori bunga sederhana</li>
-            <li>Manajemen risiko</li>
-            <li>Pengambilan keputusan rasional</li>
-            <li>Konsep opportunity cost</li>
-            <li>Simulasi ekonomi mikro sederhana</li>
-        </ul>
-        <p>Terlihat seperti mini aplikasi startup fintech.</p>
+        <div id="opening-screen">
+            <button id="start-simulation">▶ Start Simulation</button>
+            <button id="learn-mode">📘 Learn Mode</button>
+            <button id="leaderboard">🏆 Leaderboard</button>
+        </div>
 
-        <h2>🔥 STRUKTUR GAME SUPER MENARIK</h2>
+        <div id="game-screen" style="display: none;">
+            <!-- Mode A: Quick Decision -->
+            <div id="mode-a" style="display: none;">
+                <h2>MODE A – QUICK DECISION</h2>
+                <div id="item-card">
+                    <p id="item-name"></p>
+                    <p id="market-value"></p>
+                    <p id="condition"></p>
+                    <p id="risk"></p>
+                </div>
+                <div id="timer"></div>
+                <input type="number" id="loan-amount" placeholder="Jumlah Pinjaman">
+                <button id="approve">Approve</button>
+                <button id="reject">Reject</button>
+            </div>
 
-        <h3>🟦 1. Cinematic Opening Screen</h3>
-        <ul>
-            <li>Background animated gradient</li>
-            <li>Logo muncul dengan fade-in</li>
-            <li>Tombol: ▶ Start Simulation, 📘 Learn Mode, 🏆 Leaderboard</li>
-            <li>Animasi smooth 0.5s transition.</li>
-        </ul>
+            <!-- Mode B: Smart Case Analysis -->
+            <div id="mode-b" style="display: none;">
+                <h2>MODE B – SMART CASE ANALYSIS</h2>
+                <p id="case-description"></p>
+                <button id="calculate-interest">Hitung Bunga</button>
+                <p id="total-interest"></p>
+                <p id="total-payment"></p>
+                <select id="strategy">
+                    <option>Tebus sekarang</option>
+                    <option>Perpanjang</option>
+                    <option>Biarkan jatuh tempo</option>
+                </select>
+                <button id="apply-strategy">Apply</button>
+                <p id="impact"></p>
+            </div>
 
-        <h3>🟨 2. MODE A – QUICK DECISION (Timer Challenge)</h3>
-        <p>UI:</p>
-        <ul>
-            <li>Card barang muncul</li>
-            <li>Progress timer circular (seperti loading fintech app)</li>
-            <li>Info barang: Nama, Nilai pasar, Kondisi (%), Risiko</li>
-        </ul>
-        <p>Pemain:</p>
-        <ul>
-            <li>Input jumlah pinjaman</li>
-            <li>Klik Approve / Reject</li>
-            <li>Jika terlalu tinggi → perusahaan rugi</li>
-            <li>Jika terlalu rendah → kehilangan pelanggan</li>
-            <li>Jika optimal → profit maksimal</li>
-        </ul>
-        <p>Ada animasi: 💰 Uang masuk, ⚠ Warning, ❌ Loss effect (shake screen ringan)</p>
+            <!-- Risk Event -->
+            <div id="risk-event" style="display: none;"></div>
 
-        <h3>🟩 3. MODE B – SMART CASE ANALYSIS</h3>
-        <p>Studi kasus realistis:</p>
-        <p>Contoh: Seorang siswa menggadaikan emas senilai Rp2.000.000, Bunga 2% per bulan, Tenor 3 bulan</p>
-        <p>Pemain harus:</p>
-        <ul>
-            <li>Hitung total bunga</li>
-            <li>Hitung total pembayaran</li>
-            <li>Pilih strategi: Tebus sekarang, Perpanjang, Biarkan jatuh tempo</li>
-        </ul>
-        <p>Game akan menampilkan: Dampak finansial, Dampak reputasi, Perubahan skor</p>
-
-        <h3>🟥 4. RISK EVENT SYSTEM (Dinamis)</h3>
-        <p>Event acak muncul:</p>
-        <ul>
-            <li>📈 Harga emas naik 10%</li>
-            <li>⚠ Pelanggan gagal bayar</li>
-            <li>🎉 Promo bunga 1%</li>
-            <li>🚨 Barang palsu terdeteksi</li>
-        </ul>
-        <p>Pemain harus menyesuaikan strategi secara real-time.</p>
-
-        <h2>🎨 TAMPILAN WOW LEVEL</h2>
-        <h3>🌌 Visual Style</h3>
-        <ul>
-            <li>Dark gradient background (navy → deep purple)</li>
-            <li>Glassmorphism cards</li>
-            <li>Neon accent</li>
-            <li>Soft glowing buttons</li>
-            <li>Smooth hover effect</li>
-            <li>Micro-interaction animation</li>
-        </ul>
-        <p>🖥 UI Terlihat Seperti: Aplikasi fintech modern, bukan tugas sekolah.</p>
-
-        <h2>📊 SISTEM PENILAIAN PROFESIONAL</h2>
-        <p>Skor dihitung dari:</p>
-        <ul>
-            <li>Ketepatan perhitungan</li>
-            <li>Efisiensi keputusan</li>
-            <li>Manajemen risiko</li>
-            <li>Profit yang dihasilkan</li>
-        </ul>
-        <p>Rank System:</p>
-        <ul>
-            <li>💎 90–100 → Financial Strategist</li>
-            <li>📈 75–89 → Smart Investor</li>
-            <li>💼 60–74 → Risk Manager</li>
-            <li>📘 <60 → Financial Beginner</li>
-        </ul>
-
-        <h2>📈 ANALYTICS SCREEN (BIAR GURU TERKESAN)</h2>
-        <p>Di akhir game tampil:</p>
-        <ul>
-            <li>Total profit</li>
-            <li>Jumlah keputusan benar</li>
-            <li>Risiko yang berhasil dikelola</li>
-            <li>Grafik performa (canvas chart)</li>
-            <li>Evaluasi otomatis</li>
-        </ul>
-
-        <h2>🏆 BONUS FITUR BIAR MAKIN WOW</h2>
-        <ul>
-            <li>Leaderboard local</li>
-            <li>XP & level up</li>
-            <li>Achievement badge</li>
-            <li>Sound effect halus</li>
-            <li>Confetti animation saat skor tinggi</li>
-            <li>Dark/Light mode toggle</li>
-            <li>Auto save progress</li>
-        </ul>
-
-        <h2>📚 NILAI AKADEMIK YANG BISA KAMU JELASKAN KE GURU</h2>
-        <p>Game ini berbasis:</p>
-        <ul>
-            <li>Konsep bunga sederhana</li>
-            <li>Literasi keuangan</li>
-            <li>Manajemen risiko</li>
-            <li>Pengambilan keputusan rasional</li>
-            <li>Simulasi ekonomi mikro</li>
-        </ul>
-        <p>Jadi bukan cuma game, tapi alat pembelajaran interaktif.</p>
-
-        <h2>🎯 Kenapa Ini Bisa Bikin Guru Terkesan?</h2>
-        <p>Karena:</p>
-        <ul>
-            <li>UI modern</li>
-            <li>Konsep jelas</li>
-            <li>Ada sistem risiko</li>
-            <li>Ada simulasi nyata</li>
-            <li>Ada analisis akhir</li>
-            <li>Ada grafik performa</li>
-            <li>Terlihat seperti proyek startup</li>
-        </ul>
+            <!-- Analytics -->
+            <div id="analytics" style="display: none;">
+                <h2>Analytics</h2>
+                <p id="total-profit"></p>
+                <p id="correct-decisions"></p>
+                <p id="managed-risks"></p>
+                <canvas id="performance-chart"></canvas>
+            </div>
+        </div>
 
         <div class="footer">
             &copy; 2026 PawnStorm Project. All rights reserved.
         </div>
     </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
