@@ -1,167 +1,79 @@
-/* style.css */
-
-/* General Styles */
 body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #f4f7fa;
-    color: #333;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  color: white;
+  overflow-x: hidden;
 }
 
-.container {
-    max-width: 800px;
-    width: 100%;
-    padding: 20px;
-    box-sizing: border-box;
+header {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 25px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
 }
 
 .screen {
-    text-align: center;
+  display: none;
+  padding: 30px;
+  text-align: center;
 }
 
-.hidden {
-    display: none;
+.active {
+  display: block;
 }
 
-.btn {
-    padding: 10px 20px;
-    margin: 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s, transform 0.1s;
+button {
+  padding: 10px 20px;
+  margin: 10px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(45deg,#00f2fe,#4facfe);
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
-.primary {
-    background-color: #1E88E5;
-    color: white;
+button:hover {
+  transform: scale(1.05);
 }
 
-.secondary {
-    background-color: #e0e0e0;
-}
-
-.back {
-    background-color: #ccc;
-}
-
-.toggle {
-    background-color: #333;
-    color: white;
-}
-
-.btn:hover {
-    transform: scale(1.05);
-}
-
-.btn:focus {
-    outline: 2px solid #1E88E5;
-}
-
-/* Title Animation */
-.title {
-    font-size: 48px;
-    color: #1E88E5;
-}
-
-.animate-title {
-    animation: fadeIn 1s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.subtitle {
-    font-size: 24px;
-    margin-bottom: 20px;
-}
-
-/* Card UI */
 .card {
-    background-color: white;
-    border-radius: 10px;
-    padding: 20px;
-    margin: 20px 0;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    transition: transform 0.3s;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(20px);
+  padding: 20px;
+  border-radius: 15px;
+  margin: 20px auto;
+  width: 300px;
 }
 
-.card:hover {
-    transform: translateY(-5px);
+.timer-bar {
+  height: 10px;
+  width: 80%;
+  background: rgba(255,255,255,0.2);
+  margin: 20px auto;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
-/* Progress Bar */
-.progress {
-    background-color: #e0e0e0;
-    border-radius: 5px;
-    height: 10px;
-    margin: 10px 0;
+#timerProgress {
+  height: 100%;
+  width: 100%;
+  background: #00f2fe;
+  transition: width 1s linear;
 }
 
-.progress-bar {
-    background-color: #1E88E5;
-    height: 100%;
-    width: 0%;
-    transition: width 0.5s;
+input {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  width: 200px;
+  text-align: center;
 }
 
-/* Feedback */
-.feedback {
-    padding: 10px;
-    border-radius: 5px;
-    margin: 10px 0;
-}
-
-.correct {
-    background-color: #4CAF50;
-    color: white;
-}
-
-.wrong {
-    background-color: #f44336;
-    color: white;
-}
-
-/* Dark Mode */
-.dark-mode {
-    background-color: #121212;
-    color: #fff;
-}
-
-.dark-mode .card {
-    background-color: #1e1e1e;
-}
-
-.dark-mode .btn.secondary {
-    background-color: #333;
-}
-
-.dark-mode .progress {
-    background-color: #333;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-    .title {
-        font-size: 36px;
-    }
-    .subtitle {
-        font-size: 18px;
-    }
-    .btn {
-        width: 100%;
-    }
-}
-
-/* Accessibility */
-[role="button"] {
-    cursor: pointer;
+canvas {
+  margin-top: 20px;
+  background: white;
+  border-radius: 10px;
 }
