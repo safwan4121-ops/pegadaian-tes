@@ -1,71 +1,141 @@
-<!-- index.html -->
+========== index.html ==========
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PawnStorm: Advanced Financial Decision Simulator</title>
+    <title>Smart Collateral Tycoon | Pegadaian Simulator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>PawnStorm: Advanced Financial Decision Simulator</h1>
-        <p class="tagline">Think Fast. Calculate Smart. Manage Risk.</p>
-
-        <div id="opening-screen">
-            <button id="start-simulation">▶ Start Simulation</button>
-            <button id="learn-mode">📘 Learn Mode</button>
-            <button id="leaderboard">🏆 Leaderboard</button>
-        </div>
-
-        <div id="game-screen" style="display: none;">
-            <!-- Mode A: Quick Decision -->
-            <div id="mode-a" style="display: none;">
-                <h2>MODE A – QUICK DECISION</h2>
-                <div id="item-card">
-                    <p id="item-name"></p>
-                    <p id="market-value"></p>
-                    <p id="condition"></p>
-                    <p id="risk"></p>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="gold-text">SMART</span>COLLATERAL
                 </div>
-                <div id="timer"></div>
-                <input type="number" id="loan-amount" placeholder="Jumlah Pinjaman">
-                <button id="approve">Approve</button>
-                <button id="reject">Reject</button>
+                <button class="sidebar-toggle" id="sidebarToggle">☰</button>
             </div>
-
-            <!-- Mode B: Smart Case Analysis -->
-            <div id="mode-b" style="display: none;">
-                <h2>MODE B – SMART CASE ANALYSIS</h2>
-                <p id="case-description"></p>
-                <button id="calculate-interest">Hitung Bunga</button>
-                <p id="total-interest"></p>
-                <p id="total-payment"></p>
-                <select id="strategy">
-                    <option>Tebus sekarang</option>
-                    <option>Perpanjang</option>
-                    <option>Biarkan jatuh tempo</option>
-                </select>
-                <button id="apply-strategy">Apply</button>
-                <p id="impact"></p>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active" data-view="dashboard"><span class="icon">📊</span> <span class="nav-text">Dashboard</span></li>
+                    <li data-view="newTransaction"><span class="icon">➕</span> <span class="nav-text">Transaksi Baru</span></li>
+                    <li data-view="activeLoans"><span class="icon">📋</span> <span class="nav-text">Pinjaman Aktif</span></li>
+                    <li data-view="auction"><span class="icon">⚖️</span> <span class="nav-text">Lelang</span></li>
+                    <li data-view="reports"><span class="icon">📈</span> <span class="nav-text">Laporan Keuangan</span></li>
+                    <li data-view="marketStats"><span class="icon">🏷️</span> <span class="nav-text">Statistik Pasar</span></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="reputation-small">
+                    <span>Reputasi</span>
+                    <div class="progress-small"><div class="progress-fill" id="reputasiProgressSidebar"></div></div>
+                </div>
+                <div class="version">v2.0.4 • Advanced Market</div>
             </div>
+        </aside>
 
-            <!-- Risk Event -->
-            <div id="risk-event" style="display: none;"></div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <h1>Smart Collateral Tycoon</h1>
+                    <div class="economic-index">
+                        Indeks Ekonomi: <span id="ekonomiIndeks">100.0</span> 
+                        <span class="trend" id="ekonomiTrend">▲</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="cash-info">
+                        <span class="cash-label">Kas</span>
+                        <span class="cash-value" id="cashValue">Rp 100.000.000</span>
+                    </div>
+                    <div class="reputation-info">
+                        <span class="rep-label">Reputasi</span>
+                        <div class="progress-bar"><div class="progress-fill" id="reputasiProgress" style="width:50%"></div></div>
+                    </div>
+                    <div class="level-info">
+                        <span class="level-label">Level</span>
+                        <span class="level-value" id="levelValue">1</span>
+                    </div>
+                </div>
+            </header>
 
-            <!-- Analytics -->
-            <div id="analytics" style="display: none;">
-                <h2>Analytics</h2>
-                <p id="total-profit"></p>
-                <p id="correct-decisions"></p>
-                <p id="managed-risks"></p>
-                <canvas id="performance-chart"></canvas>
+            <!-- Dynamic content area -->
+            <section class="content-area" id="contentArea">
+                <!-- Dashboard akan diisi oleh JS -->
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal popup untuk transaksi -->
+    <div class="modal" id="transactionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Transaksi Baru</h2>
+                <span class="modal-close" id="modalClose">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="transactionForm">
+                    <div class="form-group">
+                        <label>Nama Nasabah</label>
+                        <input type="text" id="namaNasabah" required placeholder="Masukkan nama">
+                    </div>
+                    <div class="form-group">
+                        <label>Jenis Barang</label>
+                        <select id="jenisBarang" required>
+                            <option value="emas">Emas (per gram)</option>
+                            <option value="elektronik">Elektronik</option>
+                            <option value="kendaraan">Kendaraan</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Jumlah/Unit</label>
+                        <input type="number" id="jumlahBarang" min="1" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nilai Taksiran (Rp)</label>
+                        <input type="number" id="nilaiTaksiran" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Jumlah Pinjaman (Rp)</label>
+                        <input type="number" id="jumlahPinjaman" required min="100000">
+                    </div>
+                    <div class="form-group">
+                        <label>Suku Bunga (%) per bulan</label>
+                        <input type="number" id="bungaPinjaman" step="0.1" min="0.5" max="20" value="2.5" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="tolakPinjaman">Tolak</button>
+                        <button type="submit" class="btn btn-primary">Setujui & Beri Pinjaman</button>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
 
-        <div class="footer">
-            &copy; 2026 PawnStorm Project. All rights reserved.
+    <!-- Modal lelang -->
+    <div class="modal" id="auctionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Lelang Barang</h2>
+                <span class="modal-close" id="auctionModalClose">&times;</span>
+            </div>
+            <div class="modal-body" id="auctionModalBody">
+                <!-- diisi JS -->
+            </div>
         </div>
+    </div>
+
+    <!-- Notifikasi slide-in -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- Loading overlay untuk lelang -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Memproses lelang...</p>
     </div>
 
     <script src="script.js"></script>
