@@ -1,224 +1,488 @@
-// script.js
-document.addEventListener('DOMContentLoaded', () => {
-    // Initial setup
-    const openingScreen = document.getElementById('opening-screen');
-    const gameScreen = document.getElementById('game-screen');
-    const modeA = document.getElementById('mode-a');
-    const modeB = document.getElementById('mode-b');
-    const riskEvent = document.getElementById('risk-event');
-    const analytics = document.getElementById('analytics');
+========== script.js ==========
+// ==================== STATE GLOBAL ====================
+let gameState = {
+    cash: 100000000,               // saldo kas
+    reputasi: 50,                   // 0-100
+    level: 1,
+    ekonomiIndeks: 100.0,
+    ekonomiTrend: 'up',              // 'up' atau 'down'
+    activeLoans: [],                 // pinjaman aktif
+    auctionItems: [],                // barang siap lelang
+    transactions: [],                // history transaksi
+    cashFlowHistory: [0,0,0,0,0],    // 5 periode terakhir
+    marketPrices: {
+        emas: 1000000,               // per gram
+        elektronik: 5000000,          // per unit
+        kendaraan: 150000000          // per unit
+    },
+    priceHistory: {
+        emas: [1000000],
+        elektronik: [5000000],
+        kendaraan: [150000000]
+    },
+    interestRateDefault: 2.5,        // % per bulan
+    loanCounter: 100
+};
 
-    // Scores and stats
-    let score = 0;
-    let profit = 0;
-    let correctDecisions = 0;
-    let managedRisks = 0;
+// ==================== ELEMEN DOM ====================
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const navItems = document.querySelectorAll('.sidebar-nav li');
+const contentArea = document.getElementById('contentArea');
+const cashSpan = document.getElementById('cashValue');
+const reputasiProgress = document.getElementById('reputasiProgress');
+const reputasiSidebar = document.getElementById('reputasiProgressSidebar');
+const levelSpan = document.getElementById('levelValue');
+const ekonomiIndeksSpan = document.getElementById('ekonomiIndeks');
+const ekonomiTrendSpan = document.getElementById('ekonomiTrend');
+const notificationContainer = document.getElementById('notificationContainer');
+const loadingOverlay = document.getElementById('loadingOverlay');
 
-    // Opening screen buttons
-    document.getElementById('start-simulation').addEventListener('click', () => {
-        openingScreen.style.display = 'none';
-        gameScreen.style.display = 'block';
-        startModeA();
-    });
+// Modal transaksi
+const transactionModal = document.getElementById('transactionModal');
+const modalClose = document.getElementById('modalClose');
+const tolakPinjaman = document.getElementById('tolakPinjaman');
+const transactionForm = document.getElementById('transactionForm');
+const jenisBarang = document.getElementById('jenisBarang');
+const jumlahBarang = document.getElementById('jumlahBarang');
+const nilaiTaksiran = document.getElementById('nilaiTaksiran');
+const jumlahPinjaman = document.getElementById('jumlahPinjaman');
+const namaNasabah = document.getElementById('namaNasabah');
+const bungaPinjaman = document.getElementById('bungaPinjaman');
 
-    // Learn Mode → GANTI JADI MODAL CUSTOM (hilangkan alert!)
-    document.getElementById('learn-mode').addEventListener('click', () => {
-        document.getElementById('learn-modal').style.display = 'flex';
-    });
+// Modal lelang
+const auctionModal = document.getElementById('auctionModal');
+const auctionModalClose = document.getElementById('auctionModalClose');
+const auctionModalBody = document.getElementById('auctionModalBody');
 
-    // Tutup modal Learn
-    document.getElementById('close-learn').addEventListener('click', () => {
-        document.getElementById('learn-modal').style.display = 'none';
-    });
+// ==================== FUNGSI UTILITAS ====================
+function formatRupiah(angka) {
+    return 'Rp ' + angka.toLocaleString('id-ID');
+}
 
-    // Leaderboard (bisa diganti modal kalau mau, sekarang alert dulu)
-    document.getElementById('leaderboard').addEventListener('click', () => {
-        alert('Leaderboard: Belum tersedia. Skor lokal Anda akan disimpan di masa depan!');
-    });
+function updateHeaderUI() {
+    // animasi saldo
+    cashSpan.textContent = formatRupiah(gameState.cash);
+    cashSpan.classList.add('up');
+    setTimeout(() => cashSpan.classList.remove('up'), 300);
 
-    // Mode A: Quick Decision
-    function startModeA() {
-        modeA.style.display = 'block';
-        // Sample item (bisa diganti random nanti)
-        document.getElementById('item-name').textContent = 'Nama: Emas Batangan';
-        document.getElementById('market-value').textContent = 'Nilai Pasar: Rp 10.000.000';
-        document.getElementById('condition').textContent = 'Kondisi: 90%';
-        document.getElementById('risk').textContent = 'Risiko: Rendah';
+    reputasiProgress.style.width = gameState.reputasi + '%';
+    reputasiSidebar.style.width = gameState.reputasi + '%';
+    levelSpan.textContent = gameState.level;
 
-        // Timer circular
-        let timeLeft = 30;
-        const timerElement = document.getElementById('timer');
-        timerElement.textContent = timeLeft;
-        const interval = setInterval(() => {
-            timeLeft--;
-            timerElement.textContent = timeLeft;
-            const progress = (30 - timeLeft) / 30 * 100;
-            timerElement.style.background = `conic-gradient(#00ffcc ${progress}%, transparent 0%)`;
-            if (timeLeft <= 0) {
-                clearInterval(interval);
-                alert('Waktu habis! Loss.');
-                showAnalytics();
-            }
-        }, 1000);
+    ekonomiIndeksSpan.textContent = gameState.ekonomiIndeks.toFixed(1);
+    ekonomiTrendSpan.textContent = gameState.ekonomiTrend === 'up' ? '▲' : '▼';
+    ekonomiTrendSpan.className = 'trend ' + (gameState.ekonomiTrend === 'up' ? 'up' : 'down');
+}
 
-        // Approve/Reject (gunakan once supaya gak double listener)
-        const approveBtn = document.getElementById('approve');
-        const rejectBtn = document.getElementById('reject');
-        approveBtn.onclick = () => handleDecision(true, interval);
-        rejectBtn.onclick = () => handleDecision(false, interval);
+// Notifikasi
+function showNotification(judul, pesan, tipe = 'info') {
+    const notif = document.createElement('div');
+    notif.className = `notification ${tipe}`;
+    notif.innerHTML = `<strong>${judul}</strong><br>${pesan}`;
+    notificationContainer.appendChild(notif);
+    setTimeout(() => notif.remove(), 5000);
+}
+
+// Hitung nilai taksiran berdasarkan harga pasar
+function hitungTaksiran(jenis, jumlah) {
+    let harga = gameState.marketPrices[jenis];
+    // faktor taksiran: 80% dari harga pasar (standar pegadaian)
+    return Math.round(harga * jumlah * 0.8);
+}
+
+// Event: update taksiran otomatis di modal
+jenisBarang.addEventListener('change', updateTaksiran);
+jumlahBarang.addEventListener('input', updateTaksiran);
+function updateTaksiran() {
+    const jenis = jenisBarang.value;
+    const jumlah = parseInt(jumlahBarang.value) || 1;
+    const taksiran = hitungTaksiran(jenis, jumlah);
+    nilaiTaksiran.value = taksiran;
+    jumlahPinjaman.max = taksiran;
+    if (parseInt(jumlahPinjaman.value) > taksiran) {
+        jumlahPinjaman.value = taksiran;
+    }
+}
+
+// ==================== SISTEM FLUKTUASI HARGA ====================
+function updateMarketPrices() {
+    // Emas: fluktuasi ±1-5%
+    let emasChange = 1 + Math.random() * 4; // 1-5%
+    if (Math.random() > 0.5) emasChange = -emasChange;
+    gameState.marketPrices.emas = Math.round(gameState.marketPrices.emas * (1 + emasChange/100));
+    if (gameState.marketPrices.emas < 500000) gameState.marketPrices.emas = 500000; // batas bawah
+
+    // Elektronik: depresiasi 0-3% per periode (kecuali event)
+    let elektronikChange = - (Math.random() * 3); // -0% s/d -3%
+    gameState.marketPrices.elektronik = Math.round(gameState.marketPrices.elektronik * (1 + elektronikChange/100));
+    if (gameState.marketPrices.elektronik < 500000) gameState.marketPrices.elektronik = 500000;
+
+    // Kendaraan: bisa naik/turun tergantung usia (kita simulasikan acak)
+    let kendaraanChange = (Math.random() * 6) - 3; // -3% s/d +3%
+    gameState.marketPrices.kendaraan = Math.round(gameState.marketPrices.kendaraan * (1 + kendaraanChange/100));
+    if (gameState.marketPrices.kendaraan < 30000000) gameState.marketPrices.kendaraan = 30000000;
+
+    // Simpan history (batasi 10 data)
+    for (let key in gameState.priceHistory) {
+        gameState.priceHistory[key].push(gameState.marketPrices[key]);
+        if (gameState.priceHistory[key].length > 10) gameState.priceHistory[key].shift();
     }
 
-    function handleDecision(approve, interval) {
-        clearInterval(interval);
-        const loanInput = document.getElementById('loan-amount');
-        const loan = parseInt(loanInput.value) || 0;
-        const optimal = 10000000 * 0.8; // 8 juta
+    // Pengaruh ke indeks ekonomi (sederhana)
+    gameState.ekonomiIndeks = 100 + (gameState.marketPrices.emas - 1000000)/20000 + (gameState.marketPrices.kendaraan - 150000000)/500000;
+    gameState.ekonomiIndeks = Math.min(150, Math.max(50, gameState.ekonomiIndeks));
+    gameState.ekonomiTrend = gameState.ekonomiIndeks > 100 ? 'up' : 'down';
 
-        let message = '';
-        if (!approve) {
-            message = 'Rejected. Kehilangan pelanggan.';
-        } else if (loan > optimal + 1000000) {
-            message = 'Terlalu tinggi. Rugi!';
-            shakeScreen();
-        } else if (loan < optimal - 1000000) {
-            message = 'Terlalu rendah. Kehilangan pelanggan.';
-        } else {
-            message = 'Optimal! Profit +Rp 500.000';
-            profit += 500000;
-            correctDecisions++;
-            confetti();
+    updateHeaderUI();
+    renderCurrentView(); // refresh tampilan jika diperlukan
+}
+
+// Jalankan fluktuasi tiap 25 detik
+setInterval(updateMarketPrices, 25000);
+
+// ==================== EVENT EKONOMI ACAK ====================
+function triggerRandomEvent() {
+    const events = [
+        { name: 'Lonjakan Harga Emas', effect: () => { gameState.marketPrices.emas *= 1.12; showNotification('⚠️ EVENT', 'Harga emas melonjak 12%!', 'warning'); }},
+        { name: 'Resesi Ekonomi', effect: () => { gameState.ekonomiIndeks *= 0.85; showNotification('📉 Resesi', 'Daya beli turun, banyak nasabah berisiko gagal bayar.', 'error'); }},
+        { name: 'Regulasi Baru', effect: () => { gameState.interestRateDefault = Math.min(3.5, gameState.interestRateDefault*1.1); showNotification('🏛️ Regulator', 'Bunga maksimum dibatasi 3.5% per bulan', 'info'); }},
+        { name: 'Kelangkaan Kendaraan', effect: () => { gameState.marketPrices.kendaraan *= 1.2; showNotification('🚗 Kelangkaan', 'Harga kendaraan bekas naik 20%!', 'success'); }},
+        { name: 'Krisis Kepercayaan', effect: () => { gameState.reputasi = Math.max(0, gameState.reputasi-8); showNotification('💔 Krisis', 'Reputasi menurun karena berita negatif.', 'error'); }},
+    ];
+    const event = events[Math.floor(Math.random() * events.length)];
+    event.effect();
+    updateHeaderUI();
+    renderCurrentView();
+}
+setInterval(triggerRandomEvent, 30000);
+
+// ==================== MANAJEMEN PINJAMAN & RISIKO ====================
+// Fungsi menambah pinjaman baru
+function addNewLoan(nama, jenis, jumlahUnit, pinjaman, bunga) {
+    const taksiran = hitungTaksiran(jenis, jumlahUnit);
+    const loan = {
+        id: gameState.loanCounter++,
+        nama: nama,
+        jenis: jenis,
+        jumlahUnit: jumlahUnit,
+        taksiran: taksiran,
+        pokok: pinjaman,
+        bunga: bunga,           // % per bulan
+        sisa: pinjaman * (1 + bunga/100 * 3), // asumsi tenor 3 bulan, bunga flat
+        bulanTersisa: 3,
+        status: 'active',       // active, default, auction
+        createdAt: Date.now()
+    };
+    gameState.activeLoans.push(loan);
+    gameState.cash -= pinjaman;
+    gameState.transactions.push({ type: 'pinjaman', nama, jumlah: pinjaman, waktu: new Date() });
+    gameState.cashFlowHistory.push(pinjaman);
+    if (gameState.cashFlowHistory.length > 5) gameState.cashFlowHistory.shift();
+    showNotification('✅ Pinjaman Disetujui', `Rp ${pinjaman.toLocaleString()} kepada ${nama}`, 'success');
+    updateHeaderUI();
+}
+
+// Risiko gagal bayar: dipanggil tiap 15 detik
+function checkDefaultRisk() {
+    if (gameState.activeLoans.length === 0) return;
+    // Probabilitas gagal bayar berdasarkan reputasi dan selisih harga pasar
+    const reputasiFactor = (100 - gameState.reputasi) / 200; // 0-0.5
+    const random = Math.random();
+    let defaultIndex = [];
+    gameState.activeLoans.forEach((loan, index) => {
+        if (loan.status !== 'active') return;
+        // hitung tekanan pasar: jika harga pasar turun drastis, risiko naik
+        let hargaSekarang = gameState.marketPrices[loan.jenis];
+        let hargaAwal = loan.taksiran / (0.8 * loan.jumlahUnit); // perkiraan harga awal
+        let rasioHarga = hargaSekarang / hargaAwal;
+        let marketRisk = Math.max(0, (1 - rasioHarga) * 0.5);
+        let prob = reputasiFactor + marketRisk;
+        if (random < prob) {
+            defaultIndex.push(index);
         }
-        alert(message); // Bisa diganti modal nanti
-        loanInput.value = ''; // Reset input
-        modeA.style.display = 'none';
-        startModeB();
+    });
+    defaultIndex.forEach(idx => {
+        let loan = gameState.activeLoans[idx];
+        loan.status = 'default';
+        // pindahkan ke lelang
+        gameState.auctionItems.push({
+            loanId: loan.id,
+            nama: loan.nama,
+            jenis: loan.jenis,
+            jumlahUnit: loan.jumlahUnit,
+            taksiran: loan.taksiran,
+            sisaPinjaman: loan.sisa,
+            status: 'ready'
+        });
+        showNotification('⚠️ Gagal Bayar', `${loan.nama} gagal bayar. Barang masuk lelang.`, 'warning');
+    });
+    // hapus dari active loans yang sudah default
+    gameState.activeLoans = gameState.activeLoans.filter(l => l.status === 'active');
+    renderCurrentView();
+}
+setInterval(checkDefaultRisk, 15000);
+
+// ==================== LELANG ====================
+function prosesLelang(item) {
+    loadingOverlay.classList.add('show');
+    setTimeout(() => {
+        // harga jual = harga pasar saat ini * jumlah * faktor lelang (90%)
+        let hargaJual = gameState.marketPrices[item.jenis] * item.jumlahUnit * 0.9;
+        let keuntungan = hargaJual - item.sisaPinjaman;
+        gameState.cash += hargaJual;
+        if (keuntungan >= 0) {
+            gameState.reputasi = Math.min(100, gameState.reputasi + 2);
+            showNotification('💰 Lelang Sukses', `Terjual Rp ${hargaJual.toLocaleString()}. Untung Rp ${keuntungan.toLocaleString()}`, 'success');
+        } else {
+            gameState.reputasi = Math.max(0, gameState.reputasi - 3);
+            showNotification('😓 Lelang Rugi', `Hasil lelang tidak menutupi pinjaman. Rugi Rp ${(-keuntungan).toLocaleString()}`, 'error');
+        }
+        gameState.transactions.push({ type: 'lelang', nama: item.nama, jumlah: hargaJual, waktu: new Date() });
+        gameState.cashFlowHistory.push(-item.sisaPinjaman);
+        if (gameState.cashFlowHistory.length > 5) gameState.cashFlowHistory.shift();
+        // hapus item dari auction
+        gameState.auctionItems = gameState.auctionItems.filter(i => i.loanId !== item.loanId);
+        updateHeaderUI();
+        renderCurrentView();
+        loadingOverlay.classList.remove('show');
+        auctionModal.classList.remove('show');
+    }, 1500);
+}
+
+// ==================== RENDER VIEW (DOM MANIPULATION) ====================
+function renderDashboard() {
+    let html = `
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-title">Total Aset</div>
+                <div class="card-value">${formatRupiah(gameState.cash + gameState.activeLoans.reduce((a,l)=>a+l.sisa,0))}</div>
+                <div class="card-footer">+12% dari bulan lalu</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Pinjaman Aktif</div>
+                <div class="card-value">${gameState.activeLoans.length}</div>
+                <div class="card-footer">Nilai: ${formatRupiah(gameState.activeLoans.reduce((a,l)=>a+l.sisa,0))}</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Barang Lelang</div>
+                <div class="card-value">${gameState.auctionItems.length}</div>
+                <div class="card-footer">Estimasi nilai: ${formatRupiah(gameState.auctionItems.reduce((a,i)=>a+gameState.marketPrices[i.jenis]*i.jumlahUnit*0.9,0))}</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Reputasi</div>
+                <div class="card-value">${gameState.reputasi}%</div>
+                <div class="progress-bar" style="width:100%"><div class="progress-fill" style="width:${gameState.reputasi}%"></div></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Grafik Cash Flow (5 periode terakhir)</div>
+            <div class="chart-container" id="cashFlowChart"></div>
+        </div>
+        <div class="card">
+            <div class="card-title">Harga Pasar Terkini</div>
+            <div class="market-grid">
+                <div class="market-item">
+                    <div class="market-name">Emas (per gram)</div>
+                    <div class="market-price">${formatRupiah(gameState.marketPrices.emas)}</div>
+                    <div class="market-change positive">▲ 1.2%</div>
+                </div>
+                <div class="market-item">
+                    <div class="market-name">Elektronik (unit)</div>
+                    <div class="market-price">${formatRupiah(gameState.marketPrices.elektronik)}</div>
+                    <div class="market-change negative">▼ 0.8%</div>
+                </div>
+                <div class="market-item">
+                    <div class="market-name">Kendaraan (unit)</div>
+                    <div class="market-price">${formatRupiah(gameState.marketPrices.kendaraan)}</div>
+                    <div class="market-change positive">▲ 0.5%</div>
+                </div>
+            </div>
+        </div>
+    `;
+    contentArea.innerHTML = html;
+
+    // render chart
+    const chartContainer = document.getElementById('cashFlowChart');
+    if (chartContainer) {
+        let max = Math.max(...gameState.cashFlowHistory, 1);
+        gameState.cashFlowHistory.forEach(val => {
+            let height = (val / max) * 100;
+            if (height < 0) height = 5; // minimal
+            chartContainer.innerHTML += `<div class="chart-bar" style="height:${Math.abs(height)}px; background:${val>=0?'#4caf50':'#f44336'};" title="${formatRupiah(val)}"></div>`;
+        });
     }
+}
 
-    // Mode B: Smart Case Analysis
-    function startModeB() {
-        modeB.style.display = 'block';
-        document.getElementById('case-description').textContent = 'Seorang siswa menggadaikan emas senilai Rp2.000.000, Bunga 2% per bulan, Tenor 3 bulan.';
-
-        // Hitung bunga sekali saja
-        const calculateBtn = document.getElementById('calculate-interest');
-        calculateBtn.onclick = () => {
-            const principal = 2000000;
-            const rate = 0.02;
-            const time = 3;
-            const interest = principal * rate * time;
-            const total = principal + interest;
-            document.getElementById('total-interest').textContent = `Total Bunga: Rp ${interest.toLocaleString('id-ID')}`;
-            document.getElementById('total-payment').textContent = `Total Pembayaran: Rp ${total.toLocaleString('id-ID')}`;
-        };
-
-        // Apply strategi
-        document.getElementById('apply-strategy').onclick = () => {
-            const strategy = document.getElementById('strategy').value;
-            let impact = '';
-            if (strategy === 'Tebus sekarang') {
-                impact = 'Dampak: Profit cepat, reputasi baik.';
-                profit += 100000;
-            } else if (strategy === 'Perpanjang') {
-                impact = 'Dampak: Profit lebih, risiko meningkat.';
-                managedRisks++;
-            } else {
-                impact = 'Dampak: Risiko gagal bayar tinggi.';
-            }
-            document.getElementById('impact').textContent = impact;
-            modeB.style.display = 'none';
-            triggerRiskEvent();
-        };
+function renderActiveLoans() {
+    if (gameState.activeLoans.length === 0) {
+        contentArea.innerHTML = '<div class="card"><p>Tidak ada pinjaman aktif.</p></div>';
+        return;
     }
+    let html = `<div class="card"><table><tr><th>ID</th><th>Nasabah</th><th>Jenis</th><th>Pokok</th><th>Sisa + Bunga</th><th>Bulan</th><th>Status</th></tr>`;
+    gameState.activeLoans.forEach(l => {
+        html += `<tr><td>${l.id}</td><td>${l.nama}</td><td>${l.jenis}</td><td>${formatRupiah(l.pokok)}</td><td>${formatRupiah(l.sisa)}</td><td>${l.bulanTersisa}</td><td><span class="status-badge status-active">Aktif</span></td></tr>`;
+    });
+    html += '</table></div>';
+    contentArea.innerHTML = html;
+}
 
-    // Risk Event (random)
-    function triggerRiskEvent() {
-        riskEvent.style.display = 'block';
-        const events = [
-            '📈 Harga emas naik 10%! Profit +Rp 200.000.',
-            '⚠ Pelanggan gagal bayar. Loss -Rp 500.000.',
-            '🎉 Promo bunga 1%. Pelanggan bertambah!',
-            '🚨 Barang palsu terdeteksi. Risiko berhasil dikelola.'
-        ];
-        const randomEvent = events[Math.floor(Math.random() * events.length)];
-        riskEvent.textContent = randomEvent;
-
-        if (randomEvent.includes('Profit')) profit += 200000;
-        if (randomEvent.includes('Loss')) profit -= 500000;
-        if (randomEvent.includes('dikelola')) managedRisks++;
-
-        setTimeout(() => {
-            riskEvent.style.display = 'none';
-            showAnalytics();
-        }, 4000); // Lebih lama biar dibaca
+function renderAuction() {
+    if (gameState.auctionItems.length === 0) {
+        contentArea.innerHTML = '<div class="card"><p>Tidak ada barang lelang.</p></div>';
+        return;
     }
+    let html = `<div class="card"><table><tr><th>Nasabah</th><th>Jenis</th><th>Jumlah</th><th>Sisa Pinjaman</th><th>Harga Pasar</th><th>Aksi</th></tr>`;
+    gameState.auctionItems.forEach(item => {
+        let hargaPasar = gameState.marketPrices[item.jenis] * item.jumlahUnit;
+        html += `<tr><td>${item.nama}</td><td>${item.jenis}</td><td>${item.jumlahUnit}</td><td>${formatRupiah(item.sisaPinjaman)}</td><td>${formatRupiah(hargaPasar)}</td><td><button class="btn btn-primary auction-btn" data-id="${item.loanId}">Lelang</button></td></tr>`;
+    });
+    html += '</table></div>';
+    contentArea.innerHTML = html;
 
-    // Analytics
-    function showAnalytics() {
-        gameScreen.style.display = 'none';
-        analytics.style.display = 'block';
-
-        score = Math.round((profit / 100000) + (correctDecisions * 10) + (managedRisks * 5));
-
-        document.getElementById('total-profit').textContent = `Total Profit: Rp ${profit.toLocaleString('id-ID')}`;
-        document.getElementById('correct-decisions').textContent = `Keputusan Benar: ${correctDecisions}`;
-        document.getElementById('managed-risks').textContent = `Risiko Dikelola: ${managedRisks}`;
-
-        // Chart (pastikan Chart.js loaded)
-        const ctx = document.getElementById('performance-chart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Profit (juta)', 'Keputusan Benar', 'Risiko Dikelola'],
-                datasets: [{
-                    label: 'Performa',
-                    data: [profit / 1000000, correctDecisions, managedRisks],
-                    backgroundColor: '#00ffcc',
-                    borderColor: '#00ffcc',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: { y: { beginAtZero: true } },
-                plugins: { legend: { labels: { color: '#fff' } } }
+    document.querySelectorAll('.auction-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            let id = e.target.dataset.id;
+            let item = gameState.auctionItems.find(i => i.loanId == id);
+            if (item) {
+                auctionModalBody.innerHTML = `
+                    <p>Nasabah: ${item.nama}</p>
+                    <p>Jenis: ${item.jenis}, Jumlah: ${item.jumlahUnit}</p>
+                    <p>Sisa pinjaman: ${formatRupiah(item.sisaPinjaman)}</p>
+                    <p>Harga pasar saat ini: ${formatRupiah(gameState.marketPrices[item.jenis] * item.jumlahUnit)}</p>
+                    <p>Estimasi hasil lelang (90%): ${formatRupiah(gameState.marketPrices[item.jenis] * item.jumlahUnit * 0.9)}</p>
+                    <button class="btn btn-primary" id="confirmAuction" data-id="${item.loanId}">Lelang Sekarang</button>
+                `;
+                auctionModal.classList.add('show');
+                document.getElementById('confirmAuction').addEventListener('click', () => {
+                    prosesLelang(item);
+                });
             }
         });
+    });
+}
 
-        // Rank dengan alert (bisa diganti modal)
-        let rank = score >= 90 ? 'Financial Strategist 💎' :
-                   score >= 75 ? 'Smart Investor 📈' :
-                   score >= 60 ? 'Risk Manager 💼' : 'Financial Beginner 📘';
-        alert(`Skor Anda: ${score}\nRank: ${rank}`);
-    }
+function renderReports() {
+    let totalProfit = gameState.transactions.filter(t => t.type === 'lelang' && t.jumlah > 0).reduce((a,b)=>a+b.jumlah,0);
+    let totalLoss = gameState.transactions.filter(t => t.type === 'pinjaman').reduce((a,b)=>a+b.jumlah,0) - totalProfit;
+    if (totalLoss < 0) totalLoss = 0;
+    let totalTrans = gameState.transactions.length;
 
-    // Animations
-    function shakeScreen() {
-        document.body.classList.add('shake');
-        setTimeout(() => document.body.classList.remove('shake'), 600);
-    }
-
-    function confetti() {
-        // Placeholder sederhana (bisa tambah library confetti.js nanti)
-        alert('🎉 Confetti! Keputusan optimal!');
-    }
-
-    // Dynamic shake keyframes (sudah bagus)
-    const style = document.createElement('style');
-    style.innerHTML = `
-        .shake {
-            animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both;
-        }
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
+    html = `
+        <div class="dashboard-grid">
+            <div class="card"><div class="card-title">Total Profit</div><div class="card-value">${formatRupiah(totalProfit)}</div></div>
+            <div class="card"><div class="card-title">Total Loss</div><div class="card-value">${formatRupiah(totalLoss)}</div></div>
+            <div class="card"><div class="card-title">Total Transaksi</div><div class="card-value">${totalTrans}</div></div>
+        </div>
+        <div class="card">
+            <div class="card-title">Riwayat Transaksi</div>
+            <table><tr><th>Jenis</th><th>Nama</th><th>Jumlah</th><th>Waktu</th></tr>
+            ${gameState.transactions.slice(-5).reverse().map(t => `<tr><td>${t.type}</td><td>${t.nama || ''}</td><td>${formatRupiah(t.jumlah)}</td><td>${new Date(t.waktu).toLocaleTimeString()}</td></tr>`).join('')}
+            </table>
+        </div>
     `;
-    document.head.appendChild(style);
+    contentArea.innerHTML = html;
+}
 
-    // Load Chart.js dynamically
-    const chartScript = document.createElement('script');
-    chartScript.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-    chartScript.onload = () => console.log('Chart.js loaded');
-    document.head.appendChild(chartScript);
+function renderMarketStats() {
+    let html = `<div class="card"><h3>Grafik Pergerakan Harga (10 periode terakhir)</h3>`;
+    for (let key in gameState.priceHistory) {
+        html += `<h4>${key}</h4><div class="mini-chart">`;
+        gameState.priceHistory[key].forEach(p => {
+            let max = Math.max(...gameState.priceHistory[key]);
+            let height = (p / max) * 40;
+            html += `<div class="mini-bar" style="height:${height}px;" title="${formatRupiah(p)}"></div>`;
+        });
+        html += '</div>';
+    }
+    html += '</div>';
+    contentArea.innerHTML = html;
+}
+
+function renderCurrentView() {
+    const activeView = document.querySelector('.sidebar-nav li.active')?.dataset.view || 'dashboard';
+    switch(activeView) {
+        case 'dashboard': renderDashboard(); break;
+        case 'activeLoans': renderActiveLoans(); break;
+        case 'auction': renderAuction(); break;
+        case 'reports': renderReports(); break;
+        case 'marketStats': renderMarketStats(); break;
+        case 'newTransaction': showTransactionModal(); break;
+        default: renderDashboard();
+    }
+}
+
+// ==================== MODAL TRANSAKSI ====================
+function showTransactionModal() {
+    updateTaksiran();
+    transactionModal.classList.add('show');
+}
+
+function hideTransactionModal() {
+    transactionModal.classList.remove('show');
+    transactionForm.reset();
+}
+
+modalClose.addEventListener('click', hideTransactionModal);
+tolakPinjaman.addEventListener('click', hideTransactionModal);
+
+transactionForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nama = namaNasabah.value;
+    const jenis = jenisBarang.value;
+    const jumlah = parseInt(jumlahBarang.value);
+    const pinjaman = parseInt(jumlahPinjaman.value);
+    const bunga = parseFloat(bungaPinjaman.value);
+    const taksiran = hitungTaksiran(jenis, jumlah);
+
+    if (pinjaman > taksiran) {
+        alert('Jumlah pinjaman melebihi taksiran!');
+        return;
+    }
+    if (pinjaman > gameState.cash) {
+        alert('Kas tidak mencukupi!');
+        return;
+    }
+
+    addNewLoan(nama, jenis, jumlah, pinjaman, bunga);
+    hideTransactionModal();
+    // pindah ke dashboard
+    document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+    document.querySelector('[data-view="dashboard"]').classList.add('active');
+    renderDashboard();
 });
+
+window.addEventListener('click', (e) => {
+    if (e.target === transactionModal) hideTransactionModal();
+    if (e.target === auctionModal) auctionModal.classList.remove('show');
+});
+auctionModalClose.addEventListener('click', () => auctionModal.classList.remove('show'));
+
+// ==================== SIDEBAR NAVIGASI ====================
+navItems.forEach(item => {
+    item.addEventListener('click', () => {
+        navItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        const view = item.dataset.view;
+        if (view === 'newTransaction') {
+            showTransactionModal();
+            // tetap di view sebelumnya (dashboard)
+            document.querySelector('[data-view="dashboard"]').classList.add('active');
+            item.classList.remove('active');
+        } else {
+            renderCurrentView();
+        }
+    });
+});
+
+sidebarToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+});
+
+// ==================== INITIAL RENDER ====================
+updateHeaderUI();
+renderDashboard();
+
+// Panggil update harga pertama kali
+updateMarketPrices();
+```
