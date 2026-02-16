@@ -1,148 +1,48 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Kasir Gadai Pro — Simulator</title>
+  <title>Di Balik Nilai Sebuah Barang</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <h1>Kasir Gadai Pro</h1>
-      <p class="subtitle">Simulasi manajemen cabang — level &amp; target</p>
-    </div>
-    <div class="controls">
-      <button id="saveScoreBtn" class="btn small">Simpan Skor</button>
-      <button id="viewLeaderboardBtn" class="btn small secondary">Leaderboard</button>
-      <button id="resetBtn" class="btn small danger">Reset Game</button>
-    </div>
-  </header>
 
-  <main class="container">
-    <!-- Dashboard -->
-    <section class="dashboard">
-      <div class="card">
-        <div class="card-title">Level</div>
-        <div id="levelDisplay" class="card-value">1</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Kas</div>
-        <div id="cashDisplay" class="card-value">Rp0</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Keuntungan</div>
-        <div id="profitDisplay" class="card-value">Rp0</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Reputasi</div>
-        <div class="card-value">
-          <div id="repBar" class="rep-bar"><div id="repFill" class="rep-fill"></div></div>
-          <div id="repText" class="rep-text">0</div>
+  <div class="background"></div>
+
+  <div id="game">
+    <header>
+      <h1>Di Balik Nilai Sebuah Barang</h1>
+      <div class="header-right">
+        <div id="stats">Profesionalisme: 0 | Empati: 0 | Stabilitas: 0</div>
+        <div class="controls">
+          <button id="saveBtn" title="Simpan permainan">Save</button>
+          <button id="loadBtn" title="Muat permainan">Load</button>
+          <button id="resetBtn" title="Reset permainan">Reset</button>
         </div>
       </div>
-      <div class="card wide">
-        <div class="card-title">Target (level sekarang)</div>
-        <div id="targetDisplay" class="card-value">-</div>
-      </div>
-    </section>
+    </header>
 
-    <!-- Form & Quick Summary -->
-    <section class="main-grid">
-      <div class="panel">
-        <h2>Proses Gadai</h2>
-        <form id="pawnForm" class="form">
-          <label>Nama Pelanggan
-            <input id="custName" type="text" placeholder="contoh: Budi" required />
-          </label>
-          <label>Nama Barang
-            <input id="itemName" type="text" placeholder="contoh: HP Samsung" required />
-          </label>
-          <label>Kondisi
-            <select id="condition">
-              <option value="new">Baru</option>
-              <option value="used">Bekas</option>
-              <option value="damaged">Rusak</option>
-            </select>
-          </label>
-          <label>Estimasi Harga Pemilik (Rp)
-            <input id="estPrice" type="number" min="0" placeholder="500000" required />
-          </label>
-          <label>Jumlah Pinjaman (Rp)
-            <input id="loanAmount" type="number" min="0" placeholder="350000" required />
-          </label>
-          <label>Tenor
-            <select id="tenor">
-              <option value="7">7 hari</option>
-              <option value="14">14 hari</option>
-              <option value="30">30 hari</option>
-              <option value="60">60 hari</option>
-            </select>
-          </label>
+    <main class="scene-container">
+      <aside class="character-area">
+        <img id="character-image" src="" alt="character portrait" />
+      </aside>
 
-          <div class="form-row">
-            <button type="button" id="taksirBtn" class="btn">Taksir</button>
-            <button type="submit" id="processBtn" class="btn primary">Proses Gadai</button>
-          </div>
+      <section class="dialogue-area">
+        <div id="character-name" aria-hidden="true"></div>
+        <div id="text" class="text-box" role="article"></div>
+        <div id="choices" class="choices"></div>
+      </section>
+    </main>
 
-          <div id="taksirResult" class="taksir-result" aria-live="polite"></div>
-        </form>
-      </div>
-
-      <div class="panel">
-        <h2>Ringkasan Cepat</h2>
-        <div class="summary">
-          <p><strong>Aturan bunga default:</strong> <span id="rateDisplay">1% per minggu</span></p>
-          <p><strong>Event acak:</strong> setiap 5 transaksi akan memicu 1 event.</p>
-          <p><strong>Goal:</strong> capai target keuntungan untuk naik level.</p>
-          <div id="eventBox" class="event-box"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Tabel Transaksi -->
-    <section class="panel fullwidth">
-      <h2>Daftar Transaksi</h2>
-      <div class="table-wrap">
-        <table id="txTable">
-          <thead>
-            <tr>
-              <th>ID</th><th>Pelanggan</th><th>Barang</th><th>Pinjaman</th><th>Total Bayar</th><th>Jatuh Tempo</th><th>Status</th><th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-  </main>
-
-  <!-- Leaderboard Modal -->
-  <div id="leaderboardModal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <button class="modal-close" id="closeLeaderboard">&times;</button>
-      <h3>Leaderboard — Top Cabang</h3>
-      <ol id="leaderboardList"></ol>
-    </div>
+    <footer class="footer-note">
+      <small>Prototipe edukasi — project tugas sekolah. Audio & gambar opsional di folder <code>assets/</code>.</small>
+    </footer>
   </div>
 
-  <!-- Save Score Modal -->
-  <div id="saveModal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <button class="modal-close" id="closeSaveModal">&times;</button>
-      <h3>Simpan Skor</h3>
-      <label>Nama Pemain
-        <input id="playerName" placeholder="Nama kamu atau tim" />
-      </label>
-      <div class="form-row">
-        <button id="confirmSave" class="btn primary">Simpan</button>
-        <button id="cancelSave" class="btn secondary">Batal</button>
-      </div>
-    </div>
-  </div>
-
-  <footer class="footer">
-    <small>Proyek tugas sekolah — Kasir Gadai Pro. Buka <code>index.html</code> untuk menjalankan.</small>
-  </footer>
+  <!-- optional audio (place in assets if wanted) -->
+  <audio id="sfxClick" src="assets/click.mp3" preload="auto"></audio>
+  <audio id="sfxStat" src="assets/ding.mp3" preload="auto"></audio>
 
   <script src="script.js"></script>
 </body>
