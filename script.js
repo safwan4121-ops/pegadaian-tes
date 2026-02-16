@@ -1,220 +1,419 @@
-========== script.js ==========
-// ==================== STATE GLOBAL ====================
-let gameState = {
-    cash: 100000000,               // saldo kas
-    reputasi: 50,                   // 0-100
-    level: 1,
-    ekonomiIndeks: 100.0,
-    ekonomiTrend: 'up',              // 'up' atau 'down'
-    activeLoans: [],                 // pinjaman aktif
-    auctionItems: [],                // barang siap lelang
-    transactions: [],                // history transaksi
-    cashFlowHistory: [0,0,0,0,0],    // 5 periode terakhir
-    marketPrices: {
-        emas: 1000000,               // per gram
-        elektronik: 5000000,          // per unit
-        kendaraan: 150000000          // per unit
-    },
-    priceHistory: {
-        emas: [1000000],
-        elektronik: [5000000],
-        kendaraan: [150000000]
-    },
-    interestRateDefault: 2.5,        // % per bulan
-    loanCounter: 100
+/* Kasir Gadai Pro
+   File: script.js
+   Implementasi core: level, target, transaksi, event acak, leaderboard.
+   Author: generated for user tugas sekolah (cek & modifikasi sesuai kebutuhan)
+*/
+
+/* ---------- UTIL / FORMAT ---------- */
+const fmt = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
+
+function el(id){ return document.getElementById(id); }
+function qs(sel){ return document.querySelector(sel); }
+function qsa(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function todayPlus(days){
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d;
+}
+function formatDate(d){
+  const dd = new Date(d);
+  return dd.toLocaleDateString('id-ID');
+}
+
+/* ---------- GAME DEFAULTS ---------- */
+const DEFAULTS = {
+  level: 1,
+  cash: 10000000, // modal awal
+  profit: 0,
+  reputation: 80, // 0-100
+  weeklyRatePercent: 1.0, // 1% per minggu
+  transactionsBeforeEvent: 5,
+  levelTargets: {
+    1: 1000000,
+    2: 2500000,
+    3: 6000000,
+    4: 15000000
+  }
 };
 
-// ==================== ELEMEN DOM ====================
-const sidebar = document.getElementById('sidebar');
-const sidebarToggle = document.getElementById('sidebarToggle');
-const navItems = document.querySelectorAll('.sidebar-nav li');
-const contentArea = document.getElementById('contentArea');
-const cashSpan = document.getElementById('cashValue');
-const reputasiProgress = document.getElementById('reputasiProgress');
-const reputasiSidebar = document.getElementById('reputasiProgressSidebar');
-const levelSpan = document.getElementById('levelValue');
-const ekonomiIndeksSpan = document.getElementById('ekonomiIndeks');
-const ekonomiTrendSpan = document.getElementById('ekonomiTrend');
-const notificationContainer = document.getElementById('notificationContainer');
-const loadingOverlay = document.getElementById('loadingOverlay');
+let state = {
+  level: DEFAULTS.level,
+  cash: DEFAULTS.cash,
+  profit: DEFAULTS.profit,
+  reputation: DEFAULTS.reputation,
+  txCounter: 0,
+  transactions: []
+};
 
-// Modal transaksi
-const transactionModal = document.getElementById('transactionModal');
-const modalClose = document.getElementById('modalClose');
-const tolakPinjaman = document.getElementById('tolakPinjaman');
-const transactionForm = document.getElementById('transactionForm');
-const jenisBarang = document.getElementById('jenisBarang');
-const jumlahBarang = document.getElementById('jumlahBarang');
-const nilaiTaksiran = document.getElementById('nilaiTaksiran');
-const jumlahPinjaman = document.getElementById('jumlahPinjaman');
-const namaNasabah = document.getElementById('namaNasabah');
-const bungaPinjaman = document.getElementById('bungaPinjaman');
+/* ---------- STORAGE KEYS ---------- */
+const STORAGE_KEY = 'kasir_gadai_state_v1';
+const LB_KEY = 'kasir_gadai_leaderboard_v1';
 
-// Modal lelang
-const auctionModal = document.getElementById('auctionModal');
-const auctionModalClose = document.getElementById('auctionModalClose');
-const auctionModalBody = document.getElementById('auctionModalBody');
+/* ---------- INIT ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  hookUI();
+  loadState();
+  renderAll();
+});
 
-// ==================== FUNGSI UTILITAS ====================
-function formatRupiah(angka) {
-    return 'Rp ' + angka.toLocaleString('id-ID');
+/* ---------- UI HOOKS ---------- */
+function hookUI(){
+  el('taksirBtn').addEventListener('click', onTaksir);
+  el('pawnForm').addEventListener('submit', onProcessPawn);
+  el('resetBtn').addEventListener('click', resetGame);
+  el('viewLeaderboardBtn').addEventListener('click', showLeaderboard);
+  el('saveScoreBtn').addEventListener('click', openSaveModal);
+  el('closeLeaderboard').addEventListener('click', () => toggleModal('leaderboardModal', false));
+  el('closeSaveModal').addEventListener('click', () => toggleModal('saveModal', false));
+  el('cancelSave').addEventListener('click', () => toggleModal('saveModal', false));
+  el('confirmSave').addEventListener('click', saveScore);
 }
 
-function updateHeaderUI() {
-    // animasi saldo
-    cashSpan.textContent = formatRupiah(gameState.cash);
-    cashSpan.classList.add('up');
-    setTimeout(() => cashSpan.classList.remove('up'), 300);
-
-    reputasiProgress.style.width = gameState.reputasi + '%';
-    reputasiSidebar.style.width = gameState.reputasi + '%';
-    levelSpan.textContent = gameState.level;
-
-    ekonomiIndeksSpan.textContent = gameState.ekonomiIndeks.toFixed(1);
-    ekonomiTrendSpan.textContent = gameState.ekonomiTrend === 'up' ? '▲' : '▼';
-    ekonomiTrendSpan.className = 'trend ' + (gameState.ekonomiTrend === 'up' ? 'up' : 'down');
+/* ---------- STATE PERSISTENCE ---------- */
+function saveState(){
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch(e){
+    console.warn('Gagal menyimpan state:', e);
+  }
 }
-
-// Notifikasi
-function showNotification(judul, pesan, tipe = 'info') {
-    const notif = document.createElement('div');
-    notif.className = `notification ${tipe}`;
-    notif.innerHTML = `<strong>${judul}</strong><br>${pesan}`;
-    notificationContainer.appendChild(notif);
-    setTimeout(() => notif.remove(), 5000);
-}
-
-// Hitung nilai taksiran berdasarkan harga pasar
-function hitungTaksiran(jenis, jumlah) {
-    let harga = gameState.marketPrices[jenis];
-    // faktor taksiran: 80% dari harga pasar (standar pegadaian)
-    return Math.round(harga * jumlah * 0.8);
-}
-
-// Event: update taksiran otomatis di modal
-jenisBarang.addEventListener('change', updateTaksiran);
-jumlahBarang.addEventListener('input', updateTaksiran);
-function updateTaksiran() {
-    const jenis = jenisBarang.value;
-    const jumlah = parseInt(jumlahBarang.value) || 1;
-    const taksiran = hitungTaksiran(jenis, jumlah);
-    nilaiTaksiran.value = taksiran;
-    jumlahPinjaman.max = taksiran;
-    if (parseInt(jumlahPinjaman.value) > taksiran) {
-        jumlahPinjaman.value = taksiran;
+function loadState(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      // merge with defaults to be safe
+      state = Object.assign({}, state, parsed);
+    } else {
+      state = Object.assign({}, state, { level:DEFAULTS.level, cash:DEFAULTS.cash, profit:DEFAULTS.profit, reputation:DEFAULTS.reputation, txCounter:0, transactions:[]});
+      saveState();
     }
+  } catch(e){
+    console.warn('Gagal load state:', e);
+  }
 }
 
-// ==================== SISTEM FLUKTUASI HARGA ====================
-function updateMarketPrices() {
-    // Emas: fluktuasi ±1-5%
-    let emasChange = 1 + Math.random() * 4; // 1-5%
-    if (Math.random() > 0.5) emasChange = -emasChange;
-    gameState.marketPrices.emas = Math.round(gameState.marketPrices.emas * (1 + emasChange/100));
-    if (gameState.marketPrices.emas < 500000) gameState.marketPrices.emas = 500000; // batas bawah
-
-    // Elektronik: depresiasi 0-3% per periode (kecuali event)
-    let elektronikChange = - (Math.random() * 3); // -0% s/d -3%
-    gameState.marketPrices.elektronik = Math.round(gameState.marketPrices.elektronik * (1 + elektronikChange/100));
-    if (gameState.marketPrices.elektronik < 500000) gameState.marketPrices.elektronik = 500000;
-
-    // Kendaraan: bisa naik/turun tergantung usia (kita simulasikan acak)
-    let kendaraanChange = (Math.random() * 6) - 3; // -3% s/d +3%
-    gameState.marketPrices.kendaraan = Math.round(gameState.marketPrices.kendaraan * (1 + kendaraanChange/100));
-    if (gameState.marketPrices.kendaraan < 30000000) gameState.marketPrices.kendaraan = 30000000;
-
-    // Simpan history (batasi 10 data)
-    for (let key in gameState.priceHistory) {
-        gameState.priceHistory[key].push(gameState.marketPrices[key]);
-        if (gameState.priceHistory[key].length > 10) gameState.priceHistory[key].shift();
-    }
-
-    // Pengaruh ke indeks ekonomi (sederhana)
-    gameState.ekonomiIndeks = 100 + (gameState.marketPrices.emas - 1000000)/20000 + (gameState.marketPrices.kendaraan - 150000000)/500000;
-    gameState.ekonomiIndeks = Math.min(150, Math.max(50, gameState.ekonomiIndeks));
-    gameState.ekonomiTrend = gameState.ekonomiIndeks > 100 ? 'up' : 'down';
-
-    updateHeaderUI();
-    renderCurrentView(); // refresh tampilan jika diperlukan
+/* ---------- RENDER ---------- */
+function renderAll(){
+  renderDashboard();
+  renderTxTable();
+  renderEventBox('');
+  saveState();
 }
 
-// Jalankan fluktuasi tiap 25 detik
-setInterval(updateMarketPrices, 25000);
-
-// ==================== EVENT EKONOMI ACAK ====================
-function triggerRandomEvent() {
-    const events = [
-        { name: 'Lonjakan Harga Emas', effect: () => { gameState.marketPrices.emas *= 1.12; showNotification('⚠️ EVENT', 'Harga emas melonjak 12%!', 'warning'); }},
-        { name: 'Resesi Ekonomi', effect: () => { gameState.ekonomiIndeks *= 0.85; showNotification('📉 Resesi', 'Daya beli turun, banyak nasabah berisiko gagal bayar.', 'error'); }},
-        { name: 'Regulasi Baru', effect: () => { gameState.interestRateDefault = Math.min(3.5, gameState.interestRateDefault*1.1); showNotification('🏛️ Regulator', 'Bunga maksimum dibatasi 3.5% per bulan', 'info'); }},
-        { name: 'Kelangkaan Kendaraan', effect: () => { gameState.marketPrices.kendaraan *= 1.2; showNotification('🚗 Kelangkaan', 'Harga kendaraan bekas naik 20%!', 'success'); }},
-        { name: 'Krisis Kepercayaan', effect: () => { gameState.reputasi = Math.max(0, gameState.reputasi-8); showNotification('💔 Krisis', 'Reputasi menurun karena berita negatif.', 'error'); }},
-    ];
-    const event = events[Math.floor(Math.random() * events.length)];
-    event.effect();
-    updateHeaderUI();
-    renderCurrentView();
-}
-setInterval(triggerRandomEvent, 30000);
-
-// ==================== MANAJEMEN PINJAMAN & RISIKO ====================
-// Fungsi menambah pinjaman baru
-function addNewLoan(nama, jenis, jumlahUnit, pinjaman, bunga) {
-    const taksiran = hitungTaksiran(jenis, jumlahUnit);
-    const loan = {
-        id: gameState.loanCounter++,
-        nama: nama,
-        jenis: jenis,
-        jumlahUnit: jumlahUnit,
-        taksiran: taksiran,
-        pokok: pinjaman,
-        bunga: bunga,           // % per bulan
-        sisa: pinjaman * (1 + bunga/100 * 3), // asumsi tenor 3 bulan, bunga flat
-        bulanTersisa: 3,
-        status: 'active',       // active, default, auction
-        createdAt: Date.now()
-    };
-    gameState.activeLoans.push(loan);
-    gameState.cash -= pinjaman;
-    gameState.transactions.push({ type: 'pinjaman', nama, jumlah: pinjaman, waktu: new Date() });
-    gameState.cashFlowHistory.push(pinjaman);
-    if (gameState.cashFlowHistory.length > 5) gameState.cashFlowHistory.shift();
-    showNotification('✅ Pinjaman Disetujui', `Rp ${pinjaman.toLocaleString()} kepada ${nama}`, 'success');
-    updateHeaderUI();
+function renderDashboard(){
+  el('levelDisplay').textContent = state.level;
+  el('cashDisplay').textContent = fmt.format(state.cash);
+  el('profitDisplay').textContent = fmt.format(state.profit);
+  const rep = Math.max(0, Math.min(100, Math.round(state.reputation)));
+  el('repText').textContent = rep;
+  el('repFill').style.width = rep + '%';
+  const target = DEFAULTS.levelTargets[state.level] ?? (state.level * 5000000);
+  el('targetDisplay').textContent = fmt.format(target);
+  el('rateDisplay').textContent = `${DEFAULTS.weeklyRatePercent}% per minggu`;
 }
 
-// Risiko gagal bayar: dipanggil tiap 15 detik
-function checkDefaultRisk() {
-    if (gameState.activeLoans.length === 0) return;
-    // Probabilitas gagal bayar berdasarkan reputasi dan selisih harga pasar
-    const reputasiFactor = (100 - gameState.reputasi) / 200; // 0-0.5
-    const random = Math.random();
-    let defaultIndex = [];
-    gameState.activeLoans.forEach((loan, index) => {
-        if (loan.status !== 'active') return;
-        // hitung tekanan pasar: jika harga pasar turun drastis, risiko naik
-        let hargaSekarang = gameState.marketPrices[loan.jenis];
-        let hargaAwal = loan.taksiran / (0.8 * loan.jumlahUnit); // perkiraan harga awal
-        let rasioHarga = hargaSekarang / hargaAwal;
-        let marketRisk = Math.max(0, (1 - rasioHarga) * 0.5);
-        let prob = reputasiFactor + marketRisk;
-        if (random < prob) {
-            defaultIndex.push(index);
-        }
+/* ---------- TAKSIR (rule-based) ---------- */
+function onTaksir(){
+  const cond = el('condition').value;
+  const est = Number(el('estPrice').value) || 0;
+  if(!est || est <= 0){
+    showTaksir('Masukkan estimasi harga pemilik yang valid (lebih dari 0).', true);
+    return;
+  }
+  const factor = (cond === 'new') ? 1.0 : (cond === 'used' ? 0.7 : 0.4);
+  const low = Math.round(est * factor * 0.8);
+  const mid = Math.round(est * factor);
+  const high = Math.round(est * factor * 1.15);
+  const text = `<strong>Rentang nilai wajar:</strong> ${fmt.format(low)} — ${fmt.format(high)} (nilai tengah ${fmt.format(mid)})`;
+  showTaksir(text, false);
+}
+function showTaksir(text, isError){
+  const box = el('taksirResult');
+  box.style.display = 'block';
+  box.style.background = isError ? '#fff1f2' : '#f0fdf4';
+  box.innerHTML = text;
+  setTimeout(()=>{ box.style.opacity = '1' }, 20);
+}
+
+/* ---------- PROSES GADAI ---------- */
+function onProcessPawn(e){
+  e.preventDefault();
+  const name = el('custName').value.trim();
+  const item = el('itemName').value.trim();
+  const cond = el('condition').value;
+  const est = Number(el('estPrice').value) || 0;
+  const loan = Number(el('loanAmount').value) || 0;
+  const tenorDays = Number(el('tenor').value);
+
+  // VALIDASI
+  if(!name || !item || est <= 0 || loan <= 0){
+    showTaksir('Harap isi semua field dengan benar sebelum memproses.', true);
+    return;
+  }
+  // simple sanity: loan should not exceed ~85% dari nilai tengah taksir
+  const factor = cond === 'new' ? 1.0 : cond === 'used' ? 0.7 : 0.4;
+  const mid = Math.round(est * factor);
+  if(loan > Math.round(mid * 0.9)){
+    showTaksir(`Pinjaman terlalu tinggi dibanding estimasi wajar (${fmt.format(mid)}). Kurangi jumlah pinjaman.`, true);
+    return;
+  }
+
+  // Hitung bunga (sederhana) : weekly percent prorated by days
+  const weeks = tenorDays / 7;
+  const interest = (DEFAULTS.weeklyRatePercent / 100) * weeks * loan;
+  const totalPay = Math.round(loan + interest);
+
+  const tx = {
+    id: 'TX' + Date.now(),
+    customer: name,
+    item,
+    condition: cond,
+    estPrice: est,
+    loanAmount: loan,
+    interest: Math.round(interest),
+    totalPay,
+    startDate: (new Date()).toISOString(),
+    dueDate: todayPlus(tenorDays).toISOString(),
+    status: 'Aktif' // Aktif | Lunas | Lelang
+  };
+
+  // update cash & store tx
+  state.cash += loan;
+  state.transactions.unshift(tx);
+  state.txCounter++;
+  saveState();
+
+  renderAll();
+  showTaksir(`Transaksi berhasil dibuat. Total bayar: <strong>${fmt.format(totalPay)}</strong>. Jatuh tempo: ${formatDate(tx.dueDate)}`, false);
+
+  // setelah setiap transaksi, cek event
+  if(state.txCounter % DEFAULTS.transactionsBeforeEvent === 0) {
+    triggerRandomEvent();
+  }
+  checkLevelUp();
+}
+
+/* ---------- TRANSAKSI TABLE ---------- */
+function renderTxTable(){
+  const tbody = el('txTable').querySelector('tbody');
+  tbody.innerHTML = '';
+  state.transactions.forEach(tx => {
+    const tr = document.createElement('tr');
+
+    const dueSoon = new Date(tx.dueDate) < new Date() && tx.status === 'Aktif';
+
+    tr.innerHTML = `
+      <td>${tx.id}</td>
+      <td>${escapeHtml(tx.customer)}</td>
+      <td>${escapeHtml(tx.item)} <small class="muted">(${tx.condition})</small></td>
+      <td>${fmt.format(tx.loanAmount)}</td>
+      <td>${fmt.format(tx.totalPay)}</td>
+      <td>${formatDate(tx.dueDate)}</td>
+      <td>${renderStatus(tx.status, dueSoon)}</td>
+      <td>${renderActions(tx, dueSoon)}</td>
+    `;
+    tbody.appendChild(tr);
+
+    // attach event listeners for buttons inside row
+    const btnTebus = tr.querySelector('.btn-tebus');
+    if(btnTebus) btnTebus.addEventListener('click', ()=> tebusTx(tx.id));
+    const btnLelang = tr.querySelector('.btn-lelang');
+    if(btnLelang) btnLelang.addEventListener('click', ()=> lelangTx(tx.id));
+  });
+}
+
+function renderStatus(status, dueSoon){
+  if(status === 'Aktif') return `<span class="status-pill status-active">${dueSoon ? 'Lewat Tempo' : 'Aktif'}</span>`;
+  if(status === 'Lunas') return `<span class="status-pill status-lunas">Lunas</span>`;
+  return `<span class="status-pill status-lelang">Lelang</span>`;
+}
+
+function renderActions(tx, dueSoon){
+  if(tx.status === 'Aktif'){
+    const tebusBtn = `<button class="btn small btn-tebus">Tebus</button>`;
+    const lelangBtn = dueSoon ? `<button class="btn small btn-lelang danger">Lelang</button>` : '';
+    return tebusBtn + ' ' + lelangBtn;
+  } else {
+    return `<span style="color:var(--muted)">-</span>`;
+  }
+}
+
+/* ---------- Aksi: Tebus & Lelang ---------- */
+function tebusTx(id){
+  const idx = state.transactions.findIndex(t => t.id === id);
+  if(idx === -1) return;
+  const tx = state.transactions[idx];
+  if(tx.status !== 'Aktif') return;
+
+  // pelanggan bayar totalPay -> kas bertambah, profit = totalPay - loanAmount (bunga masuk sebagai profit)
+  state.cash += tx.totalPay;
+  const earned = tx.totalPay - tx.loanAmount;
+  state.profit += earned;
+  tx.status = 'Lunas';
+  state.reputation = Math.min(100, state.reputation + 2); // penebusan menaikkan reputasi
+  saveState();
+  renderAll();
+  showTaksir(`Transaksi ${tx.id} berhasil ditebus. Keuntungan diperoleh ${fmt.format(earned)}.`, false);
+  checkLevelUp();
+}
+
+function lelangTx(id){
+  const idx = state.transactions.findIndex(t => t.id === id);
+  if(idx === -1) return;
+  const tx = state.transactions[idx];
+  if(tx.status !== 'Aktif') return;
+
+  // Hasil lelang = random antara 60% - 120% dari estimasi nilai taksir
+  const condFactor = tx.condition === 'new' ? 1 : tx.condition === 'used' ? 0.7 : 0.4;
+  const estMid = Math.round(tx.estPrice * condFactor);
+  const multiplier = (Math.random() * 0.6) + 0.6; // 0.6..1.2
+  const sale = Math.round(estMid * multiplier);
+
+  // update
+  tx.status = 'Lelang';
+  state.cash += sale;
+  const earned = sale - tx.loanAmount;
+  state.profit += Math.max(0, earned);
+  // reputasi turun sedikit karena nasabah kehilangan barang
+  state.reputation = Math.max(0, state.reputation - 6);
+
+  saveState();
+  renderAll();
+  showTaksir(`Barang ${tx.item} telah dilelang. Hasil: ${fmt.format(sale)}. Pengaruh ke reputasi: -6.`, false);
+  checkLevelUp();
+}
+
+/* ---------- RANDOM EVENT ---------- */
+const EVENTS = [
+  { text: 'Harga emas naik 10% bulan ini — transaksi emas untung lebih besar.', fn(state){
+      // kecilkan reputasi hazard, tambahkan profit peluang: apply when lelang occurs later
+      renderEventBox('Event: Harga emas naik. Barang bertipe "emas" (jika ada) cenderung lebih menguntungkan.');
+    }},
+  { text: 'Bulan menunggak: 20% nasabah menunggak, lebih banyak lelang.', fn(state){
+      // menurunkan reputasi sedikit, set flag that increases chance nasabah tidak menebus
+      state.reputation = Math.max(0, state.reputation - 3);
+      renderEventBox('Event: Banyak nasabah menunggak. Reputasi sedikit turun.');
+    }},
+  { text: 'Promo bunga: diskon 0.5% minggu ini — menarik lebih banyak pelanggan.', fn(state){
+      DEFAULTS.weeklyRatePercent = Math.max(0.2, DEFAULTS.weeklyRatePercent - 0.5);
+      renderEventBox('Event: Promo bunga aktif. Bunga mingguan dikurangi 0.5%.');
+    }},
+  { text: 'Insiden cabang: satu barang rusak saat disimpan.', fn(state){
+      state.reputation = Math.max(0, state.reputation - 8);
+      renderEventBox('Event: Insiden cabang. Reputasi turun drastis.');
+    }}
+];
+
+function triggerRandomEvent(){
+  const idx = Math.floor(Math.random() * EVENTS.length);
+  const ev = EVENTS[idx];
+  try {
+    ev.fn(state);
+    saveState();
+  } catch(e){
+    console.warn('Error saat menjalankan event:', e);
+  }
+}
+
+/* ---------- LEVEL UP ---------- */
+function checkLevelUp(){
+  const target = DEFAULTS.levelTargets[state.level] ?? (state.level * 5000000);
+  if(state.profit >= target){
+    state.level++;
+    // naik level: beri modal tambahan, reset/reward
+    const bonus = Math.round(target * 0.2);
+    state.cash += bonus;
+    state.reputation = Math.min(100, state.reputation + 10);
+    renderEventBox(`Selamat! Level naik ke ${state.level}. Modal bonus ${fmt.format(bonus)} diberikan.`);
+    saveState();
+    renderAll();
+  }
+  // gameover condition
+  if(state.reputation <= 10){
+    renderEventBox('Reputasi terlalu rendah — GAME OVER. Silakan reset dan coba strategi baru.');
+  }
+}
+
+/* ---------- EVENTS & UI ---------- */
+function renderEventBox(msg){
+  const box = el('eventBox');
+  box.innerHTML = msg || '';
+}
+
+/* ---------- ESCAPE HTML helper ---------- */
+function escapeHtml(str){
+  return (''+str).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
+}
+
+/* ---------- SAVE / LEADERBOARD ---------- */
+function openSaveModal(){
+  el('playerName').value = '';
+  toggleModal('saveModal', true);
+}
+function saveScore(){
+  const name = el('playerName').value.trim();
+  if(!name){ alert('Isi nama terlebih dahulu'); return; }
+  const board = JSON.parse(localStorage.getItem(LB_KEY) || '[]');
+  board.push({ name, profit: state.profit, level: state.level, date: (new Date()).toISOString() });
+  // sort descending profit and keep top 20
+  board.sort((a,b)=> b.profit - a.profit);
+  localStorage.setItem(LB_KEY, JSON.stringify(board.slice(0,20)));
+  toggleModal('saveModal', false);
+  showLeaderboard();
+}
+function showLeaderboard(){
+  const board = JSON.parse(localStorage.getItem(LB_KEY) || '[]');
+  const ol = el('leaderboardList');
+  ol.innerHTML = '';
+  if(board.length === 0){
+    ol.innerHTML = '<li>Belum ada skor tersimpan.</li>';
+  } else {
+    board.forEach(entry => {
+      const li = document.createElement('li');
+      li.innerHTML = `${escapeHtml(entry.name)} — ${fmt.format(entry.profit)} (Level ${entry.level}) — ${formatDate(entry.date)}`;
+      ol.appendChild(li);
     });
-    defaultIndex.forEach(idx => {
-        let loan = gameState.activeLoans[idx];
-        loan.status = 'default';
-        // pindahkan ke lelang
-        gameState.auctionItems.push({
-            loanId: loan.id,
-            nama: loan.nama,
-            jenis: loan.jenis,
-            jumlahUnit: loan.jumlahUnit,
-            taksiran: loan.taksiran,
-            sisaPinjaman: loan.sisa,
-            status: 'ready'
-        });
+  }
+  toggleModal('leaderboardModal', true);
+}
+function toggleModal(id, show){
+  const m = el(id);
+  if(!m) return;
+  m.setAttribute('aria-hidden', show ? 'false' : 'true');
+}
+
+/* ---------- RESET GAME ---------- */
+function resetGame(){
+  if(!confirm('Reset game akan menghapus progress saat ini. Lanjutkan?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = { level: DEFAULTS.level, cash: DEFAULTS.cash, profit: DEFAULTS.profit, reputation: DEFAULTS.reputation, txCounter:0, transactions:[] };
+  saveState();
+  renderAll();
+}
+
+/* ---------- UTIL: POLLING for DUE DATES ---------- */
+setInterval(()=> {
+  // cek transaksi lewat tempo terus-menerus (setiap 10s)
+  let changed = false;
+  const now = new Date();
+  state.transactions.forEach(tx => {
+    if(tx.status === 'Aktif'){
+      if(new Date(tx.dueDate) < now){
+        // flag: nothing auto-happens until manager pilih lelang; we display "Lewat Tempo" in UI
+        changed = true;
+      }
+    }
+  });
+  if(changed) renderTxTable();
+}, 10000);
+
+/* ---------- HELPER: Escape confirm ---------- */
+window.addEventListener('beforeunload', () => { saveState(); });
+
+/* initial render after load */
+renderAll();      });
         showNotification('⚠️ Gagal Bayar', `${loan.nama} gagal bayar. Barang masuk lelang.`, 'warning');
     });
     // hapus dari active loans yang sudah default
