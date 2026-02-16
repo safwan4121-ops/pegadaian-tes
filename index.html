@@ -1,143 +1,149 @@
-========== index.html ==========
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Collateral Tycoon | Pegadaian Simulator</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kasir Gadai Pro — Simulator</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="app">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <span class="gold-text">SMART</span>COLLATERAL
-                </div>
-                <button class="sidebar-toggle" id="sidebarToggle">☰</button>
-            </div>
-            <nav class="sidebar-nav">
-                <ul>
-                    <li class="active" data-view="dashboard"><span class="icon">📊</span> <span class="nav-text">Dashboard</span></li>
-                    <li data-view="newTransaction"><span class="icon">➕</span> <span class="nav-text">Transaksi Baru</span></li>
-                    <li data-view="activeLoans"><span class="icon">📋</span> <span class="nav-text">Pinjaman Aktif</span></li>
-                    <li data-view="auction"><span class="icon">⚖️</span> <span class="nav-text">Lelang</span></li>
-                    <li data-view="reports"><span class="icon">📈</span> <span class="nav-text">Laporan Keuangan</span></li>
-                    <li data-view="marketStats"><span class="icon">🏷️</span> <span class="nav-text">Statistik Pasar</span></li>
-                </ul>
-            </nav>
-            <div class="sidebar-footer">
-                <div class="reputation-small">
-                    <span>Reputasi</span>
-                    <div class="progress-small"><div class="progress-fill" id="reputasiProgressSidebar"></div></div>
-                </div>
-                <div class="version">v2.0.4 • Advanced Market</div>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="header">
-                <div class="header-left">
-                    <h1>Smart Collateral Tycoon</h1>
-                    <div class="economic-index">
-                        Indeks Ekonomi: <span id="ekonomiIndeks">100.0</span> 
-                        <span class="trend" id="ekonomiTrend">▲</span>
-                    </div>
-                </div>
-                <div class="header-right">
-                    <div class="cash-info">
-                        <span class="cash-label">Kas</span>
-                        <span class="cash-value" id="cashValue">Rp 100.000.000</span>
-                    </div>
-                    <div class="reputation-info">
-                        <span class="rep-label">Reputasi</span>
-                        <div class="progress-bar"><div class="progress-fill" id="reputasiProgress" style="width:50%"></div></div>
-                    </div>
-                    <div class="level-info">
-                        <span class="level-label">Level</span>
-                        <span class="level-value" id="levelValue">1</span>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Dynamic content area -->
-            <section class="content-area" id="contentArea">
-                <!-- Dashboard akan diisi oleh JS -->
-            </section>
-        </main>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Kasir Gadai Pro</h1>
+      <p class="subtitle">Simulasi manajemen cabang — level &amp; target</p>
     </div>
+    <div class="controls">
+      <button id="saveScoreBtn" class="btn small">Simpan Skor</button>
+      <button id="viewLeaderboardBtn" class="btn small secondary">Leaderboard</button>
+      <button id="resetBtn" class="btn small danger">Reset Game</button>
+    </div>
+  </header>
 
-    <!-- Modal popup untuk transaksi -->
-    <div class="modal" id="transactionModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Transaksi Baru</h2>
-                <span class="modal-close" id="modalClose">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="transactionForm">
-                    <div class="form-group">
-                        <label>Nama Nasabah</label>
-                        <input type="text" id="namaNasabah" required placeholder="Masukkan nama">
-                    </div>
-                    <div class="form-group">
-                        <label>Jenis Barang</label>
-                        <select id="jenisBarang" required>
-                            <option value="emas">Emas (per gram)</option>
-                            <option value="elektronik">Elektronik</option>
-                            <option value="kendaraan">Kendaraan</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Jumlah/Unit</label>
-                        <input type="number" id="jumlahBarang" min="1" value="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Nilai Taksiran (Rp)</label>
-                        <input type="number" id="nilaiTaksiran" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Jumlah Pinjaman (Rp)</label>
-                        <input type="number" id="jumlahPinjaman" required min="100000">
-                    </div>
-                    <div class="form-group">
-                        <label>Suku Bunga (%) per bulan</label>
-                        <input type="number" id="bungaPinjaman" step="0.1" min="0.5" max="20" value="2.5" required>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" id="tolakPinjaman">Tolak</button>
-                        <button type="submit" class="btn btn-primary">Setujui & Beri Pinjaman</button>
-                    </div>
-                </form>
-            </div>
+  <main class="container">
+    <!-- Dashboard -->
+    <section class="dashboard">
+      <div class="card">
+        <div class="card-title">Level</div>
+        <div id="levelDisplay" class="card-value">1</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Kas</div>
+        <div id="cashDisplay" class="card-value">Rp0</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Keuntungan</div>
+        <div id="profitDisplay" class="card-value">Rp0</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Reputasi</div>
+        <div class="card-value">
+          <div id="repBar" class="rep-bar"><div id="repFill" class="rep-fill"></div></div>
+          <div id="repText" class="rep-text">0</div>
         </div>
-    </div>
+      </div>
+      <div class="card wide">
+        <div class="card-title">Target (level sekarang)</div>
+        <div id="targetDisplay" class="card-value">-</div>
+      </div>
+    </section>
 
-    <!-- Modal lelang -->
-    <div class="modal" id="auctionModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Lelang Barang</h2>
-                <span class="modal-close" id="auctionModalClose">&times;</span>
-            </div>
-            <div class="modal-body" id="auctionModalBody">
-                <!-- diisi JS -->
-            </div>
+    <!-- Form & Quick Summary -->
+    <section class="main-grid">
+      <div class="panel">
+        <h2>Proses Gadai</h2>
+        <form id="pawnForm" class="form">
+          <label>Nama Pelanggan
+            <input id="custName" type="text" placeholder="contoh: Budi" required />
+          </label>
+          <label>Nama Barang
+            <input id="itemName" type="text" placeholder="contoh: HP Samsung" required />
+          </label>
+          <label>Kondisi
+            <select id="condition">
+              <option value="new">Baru</option>
+              <option value="used">Bekas</option>
+              <option value="damaged">Rusak</option>
+            </select>
+          </label>
+          <label>Estimasi Harga Pemilik (Rp)
+            <input id="estPrice" type="number" min="0" placeholder="500000" required />
+          </label>
+          <label>Jumlah Pinjaman (Rp)
+            <input id="loanAmount" type="number" min="0" placeholder="350000" required />
+          </label>
+          <label>Tenor
+            <select id="tenor">
+              <option value="7">7 hari</option>
+              <option value="14">14 hari</option>
+              <option value="30">30 hari</option>
+              <option value="60">60 hari</option>
+            </select>
+          </label>
+
+          <div class="form-row">
+            <button type="button" id="taksirBtn" class="btn">Taksir</button>
+            <button type="submit" id="processBtn" class="btn primary">Proses Gadai</button>
+          </div>
+
+          <div id="taksirResult" class="taksir-result" aria-live="polite"></div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2>Ringkasan Cepat</h2>
+        <div class="summary">
+          <p><strong>Aturan bunga default:</strong> <span id="rateDisplay">1% per minggu</span></p>
+          <p><strong>Event acak:</strong> setiap 5 transaksi akan memicu 1 event.</p>
+          <p><strong>Goal:</strong> capai target keuntungan untuk naik level.</p>
+          <div id="eventBox" class="event-box"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- Tabel Transaksi -->
+    <section class="panel fullwidth">
+      <h2>Daftar Transaksi</h2>
+      <div class="table-wrap">
+        <table id="txTable">
+          <thead>
+            <tr>
+              <th>ID</th><th>Pelanggan</th><th>Barang</th><th>Pinjaman</th><th>Total Bayar</th><th>Jatuh Tempo</th><th>Status</th><th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Leaderboard Modal -->
+  <div id="leaderboardModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" id="closeLeaderboard">&times;</button>
+      <h3>Leaderboard — Top Cabang</h3>
+      <ol id="leaderboardList"></ol>
     </div>
+  </div>
 
-    <!-- Notifikasi slide-in -->
-    <div class="notification-container" id="notificationContainer"></div>
-
-    <!-- Loading overlay untuk lelang -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-        <p>Memproses lelang...</p>
+  <!-- Save Score Modal -->
+  <div id="saveModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="modal-close" id="closeSaveModal">&times;</button>
+      <h3>Simpan Skor</h3>
+      <label>Nama Pemain
+        <input id="playerName" placeholder="Nama kamu atau tim" />
+      </label>
+      <div class="form-row">
+        <button id="confirmSave" class="btn primary">Simpan</button>
+        <button id="cancelSave" class="btn secondary">Batal</button>
+      </div>
     </div>
+  </div>
 
-    <script src="script.js"></script>
+  <footer class="footer">
+    <small>Proyek tugas sekolah — Kasir Gadai Pro. Buka <code>index.html</code> untuk menjalankan.</small>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
