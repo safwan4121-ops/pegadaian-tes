@@ -101,6 +101,17 @@ body {
   transform: scale(1.05);
 }
 
+/* === ANIMASI KARAKTER SMOOTH === */
+#character-image {
+  opacity: 0;
+  transform: translateX(-30px) scale(0.97);
+  transition: all 0.5s ease;
+}
+
+#character-image.show {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
 @keyframes fadeUp {
   to {
     opacity: 1;
