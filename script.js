@@ -12,7 +12,7 @@ const defaultState = {
 };
 
 let gameState = { ...defaultState };
-let currentScene = "S1";
+let currentScene = "INTRO";  // Mulai dari pengertian pegadaian dulu;
 
 // ---------- 2) CHARACTERS & ASSETS ----------
 const characters = {
@@ -38,6 +38,24 @@ function tryPlay(audioEl) {
 
 // ---------- 3) STORY DATA (FULL DIALOGS) ----------
 const story = {
+  INTRO: {
+  text: `🪙 <strong>Pengertian Pegadaian</strong>
+
+Pegadaian adalah lembaga keuangan non-bank milik pemerintah yang menyediakan layanan <em>gadai</em>. Nasabah menjaminkan barang berharga (seperti emas, elektronik, atau perhiasan) untuk mendapatkan pinjaman tunai cepat.
+
+<strong>Cara Kerja:</strong>
+• Nasabah gadaikan barang → Dapat uang tunai (berdasarkan taksiran nilai barang).
+• Bayar pokok + bunga tepat waktu → Barang ditebus kembali.
+• Telat bayar → Barang bisa dilelang.
+
+Tugas petugas: Taksir nilai jujur, layani dengan empati, jaga prosedur & stabilitas cabang.
+
+<strong>Selamat datang! Tekan "Mulai Bermain" untuk memulai simulasi.</strong>`,
+  character: null,
+  choices: [
+    { text: "Mulai Bermain", next: "S1" }
+  ]
+},
   // S1 Intro
   S1: {
     text:
@@ -328,8 +346,18 @@ function applyEffect(effect) {
 
 // ---------- 5) UPDATE STATS UI ----------
 function updateStatsUI() {
+  function updateStatsUI() {
   const statsEl = $("stats");
   statsEl.innerText = `Profesionalisme: ${gameState.profesionalisme} | Empati: ${gameState.empati} | Stabilitas: ${gameState.stabilitas}`;
+
+  // Update progress bars (skala nilai dari -5 sampai 10 → jadi persen 0-100%)
+  const profPercent = ((gameState.profesionalisme + 5) / 15) * 100;
+  const empPercent  = ((gameState.empati + 5) / 15) * 100;
+  const stabPercent = ((gameState.stabilitas + 5) / 15) * 100;
+
+  $("prof-bar").style.width = `${Math.max(0, Math.min(100, profPercent))}%`;
+  $("emp-bar").style.width  = `${Math.max(0, Math.min(100, empPercent))}%`;
+  $("stab-bar").style.width = `${Math.max(0, Math.min(100, stabPercent))}%`;
 }
 
 // ---------- 6) RENDER LOGIC ----------
@@ -359,21 +387,47 @@ function renderScene() {
 
   // set text after tiny delay for fade effect
   setTimeout(() => {
-    textBox.innerHTML = scene.text.split("\n").map(line => `<p>${escapeHtml(line)}</p>`).join("");
-    textBox.classList.add("show");
-  }, 80);
+  const textContent = $("text-content");
+  textContent.innerHTML = "";  // clear dulu
+
+  let fullText = scene.text;
+  let i = 0;
+  const typingSpeed = 30;  // ms per karakter, bisa diubah lebih cepat/lambat
+
+  function type() {
+    if (i < fullText.length) {
+      textContent.innerHTML += escapeHtml(fullText.charAt(i));
+      i++;
+      setTimeout(type, typingSpeed);
+    } else {
+      // setelah selesai ketik, tampilkan choices dengan delay
+      setTimeout(() => {
+        const buttons = document.querySelectorAll("#choices button");
+        buttons.forEach((btn, idx) => {
+          setTimeout(() => btn.classList.add("show"), idx * 100);
+        });
+      }, 400);
+    }
+  }
+
+  textBox.classList.add("show");
+  type();
+}, 200);
 
   // character portrait
-  if (scene.character && characters[scene.character]) {
-    nameBox.innerText = characters[scene.character].name;
-    img.style.display = "";
-    img.onload = () => img.classList.add("show");
-    img.onerror = () => { img.style.display = "none"; };
-    img.src = characters[scene.character].image || "";
-  } else {
-    nameBox.innerText = "";
-    img.style.display = "none";
-  }
+  // character portrait
+if (scene.character && characters[scene.character]) {
+  nameBox.innerText = characters[scene.character].name;
+  nameBox.classList.add("show");          // <-- TAMBAHKAN BARIS INI
+  img.style.display = "";
+  img.onload = () => img.classList.add("show");
+  img.onerror = () => { img.style.display = "none"; };
+  img.src = characters[scene.character].image || "";
+} else {
+  nameBox.innerText = "";
+  nameBox.classList.remove("show");       // <-- TAMBAHKAN BARIS INI (penting!)
+  img.style.display = "none";
+}
 
   // build choices (support next being function)
   scene.choices.forEach((choice, idx) => {
