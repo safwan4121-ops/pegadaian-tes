@@ -13,8 +13,6 @@ const defaultState = {
 
 let gameState = { ...defaultState };
 let currentScene = "S1";
-let isTyping = false;
-let skipTyping = false;
 
 // ---------- 2) CHARACTERS & ASSETS ----------
 const characters = {
@@ -25,8 +23,6 @@ const characters = {
 
 // helper to safely get DOM elements
 const $ = id => document.getElementById(id);
-
-};
 
 // audio (optional)
 const sfxClick = $("sfxClick");
@@ -363,16 +359,15 @@ function renderScene() {
 
   // set text after tiny delay for fade effect
   setTimeout(() => {
-  const cleanText = escapeHtml(scene.text).replace(/\n/g, "<br><br>");
-  textBox.classList.add("show");
-  typeWriter(textBox, cleanText);
-}, 80);
+    textBox.innerHTML = scene.text.split("\n").map(line => `<p>${escapeHtml(line)}</p>`).join("");
+    textBox.classList.add("show");
+  }, 80);
 
   // character portrait
   if (scene.character && characters[scene.character]) {
     nameBox.innerText = characters[scene.character].name;
     img.style.display = "";
-    img.classList.remove("show");  img.onload = () => {   requestAnimationFrame(() => {     img.classList.add("show");   }); };
+    img.onload = () => img.classList.add("show");
     img.onerror = () => { img.style.display = "none"; };
     img.src = characters[scene.character].image || "";
   } else {
@@ -401,14 +396,11 @@ function renderScene() {
         console.error("Choice missing next for", currentScene, choice);
         next = "S1";
       }
-      textBox.classList.remove("show");
-img.classList.remove("show");
-
-setTimeout(() => {
-  currentScene = next;
-  updateStatsUI();
-  renderScene();
-}, 350);
+      setTimeout(() => {
+        currentScene = next;
+        updateStatsUI();
+        renderScene();
+      }, 240);
     });
 
     btn.style.transitionDelay = (idx * 80) + "ms";
@@ -424,11 +416,7 @@ function showEnding() {
   const choiceBox = $("choices");
   const nameBox = $("character-name");
   const img = $("character-image");
-textBox.onclick = () => {
-  if (isTyping) {
-    skipTyping = true;
-  }
-};
+
   nameBox.innerText = "";
   img.style.display = "none";
   choiceBox.innerHTML = "";
@@ -509,173 +497,6 @@ function resetGame() {
 }
 
 // ---------- 9) UTILS ----------
-function typeWriter(element, text, speed = 18, callback) {
-  element.innerHTML = "";
-  isTyping = true;
-  skipTyping = false;
-
-  let i = 0;
-
-  function typing() {
-    if (skipTyping) {
-      element.innerHTML = text;
-      isTyping = false;
-      if (callback) callback();
-      return;
-    }
-
-    if (i < text.length) {
-
-      // Kalau ketemu <br> langsung masukkan tanpa diketik satu-satu
-      if (text.substring(i, i + 4) === "<br>") {
-        element.innerHTML += "<br>";
-        i += 4;
-      } else {
-        element.innerHTML += text.charAt(i);
-        i++;
-      }
-
-      setTimeout(typing, speed);
-
-    } else {
-      isTyping = false;
-      if (callback) callback();
-    }
-  }
-
-  typing();
-}
-  element.innerHTML = "";
-  isTyping = true;
-  skipTyping = false;
-
-  let i = 0;
-
-  function typing() {
-    if (skipTyping) {
-      element.innerHTML = text;
-      isTyping = false;
-      if (callback) callback();
-      return;
-    }
-
-    if (i < text.length) {
-
-      // Kalau ketemu <br> langsung masukkan tanpa diketik satu-satu
-      if (text.substring(i, i + 4) === "<br>") {
-        element.innerHTML += "<br>";
-        i += 4;
-      } else {
-        element.innerHTML += text.charAt(i);
-        i++;
-      }
-
-      setTimeout(typing, speed);
-
-    } else {
-      isTyping = false;
-      if (callback) callback();
-    }
-  }
-
-  typing();
-}
-  element.innerHTML = "";
-  isTyping = true;
-  skipTyping = false;
-
-  let i = 0;
-
-  function typing() {
-    if (skipTyping) {
-      element.innerHTML = text;
-      isTyping = false;
-      if (callback) callback();
-      return;
-    }
-
-    if (i < text.length) {
-
-      // Kalau ketemu <br> langsung masukkan tanpa diketik satu-satu
-      if (text.substring(i, i + 4) === "<br>") {
-        element.innerHTML += "<br>";
-        i += 4;
-      } else {
-        element.innerHTML += text.charAt(i);
-        i++;
-      }
-
-      setTimeout(typing, speed);
-
-    } else {
-      isTyping = false;
-      if (callback) callback();
-    }
-  }
-
-  typing();
-}
-  element.innerHTML = "";
-  isTyping = true;
-  skipTyping = false;
-
-  let i = 0;
-
-  function typing() {
-    if (skipTyping) {
-      element.innerHTML = text;
-      isTyping = false;
-      if (callback) callback();
-      return;
-    }
-
-    if (i < text.length) {
-
-      // Kalau ketemu <br> langsung masukkan tanpa diketik satu-satu
-      if (text.substring(i, i + 4) === "<br>") {
-        element.innerHTML += "<br>";
-        i += 4;
-      } else {
-        element.innerHTML += text.charAt(i);
-        i++;
-      }
-
-      setTimeout(typing, speed);
-
-    } else {
-      isTyping = false;
-      if (callback) callback();
-    }
-  }
-
-  typing();
-}
-  element.innerHTML = "";
-  isTyping = true;
-  skipTyping = false;
-
-  let i = 0;
-
-  function typing() {
-    if (skipTyping) {
-      element.innerHTML = text;
-      isTyping = false;
-      if (callback) callback();
-      return;
-    }
-
-    if (i < text.length) {
-      element.innerHTML += text.charAt(i);
-      i++;
-      setTimeout(typing, speed);
-    } else {
-      isTyping = false;
-      if (callback) callback();
-    }
-  }
-
-  typing();
-}
 function escapeHtml(str) {
   if (!str) return "";
   return String(str)
