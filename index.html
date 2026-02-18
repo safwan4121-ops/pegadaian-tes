@@ -4,21 +4,39 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Di Balik Nilai Sebuah Barang</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
   <div class="background"></div>
+  <div class="vignette"></div>
 
   <div id="game">
     <header>
       <h1>Di Balik Nilai Sebuah Barang</h1>
       <div class="header-right">
         <div id="stats">Profesionalisme: 0 | Empati: 0 | Stabilitas: 0</div>
+        <div class="progress-bars">
+          <div class="stat-bar">
+            <div class="stat-label">Profesionalisme</div>
+            <div class="bar-container"><div id="prof-bar" class="bar-fill prof"></div></div>
+          </div>
+          <div class="stat-bar">
+            <div class="stat-label">Empati</div>
+            <div class="bar-container"><div id="emp-bar" class="bar-fill emp"></div></div>
+          </div>
+          <div class="stat-bar">
+            <div class="stat-label">Stabilitas</div>
+            <div class="bar-container"><div id="stab-bar" class="bar-fill stab"></div></div>
+          </div>
+        </div>
         <div class="controls">
-          <button id="saveBtn" title="Simpan permainan">Save</button>
-          <button id="loadBtn" title="Muat permainan">Load</button>
-          <button id="resetBtn" title="Reset permainan">Reset</button>
+          <button id="saveBtn" title="Simpan permainan">💾 Save</button>
+          <button id="loadBtn" title="Muat permainan">📂 Load</button>
+          <button id="resetBtn" title="Reset permainan">🔄 Reset</button>
         </div>
       </div>
     </header>
@@ -30,7 +48,10 @@
 
       <section class="dialogue-area">
         <div id="character-name" aria-hidden="true"></div>
-        <div id="text" class="text-box" role="article"></div>
+        <div id="text" class="text-box" role="article">
+          <span id="text-content"></span>
+          <div id="cursor"></div>
+        </div>
         <div id="choices" class="choices"></div>
       </section>
     </main>
@@ -50,4 +71,4 @@
 
   <script src="script.js"></script>
 </body>
-    </html>
+</html>
