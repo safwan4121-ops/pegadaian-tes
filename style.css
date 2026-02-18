@@ -112,60 +112,6 @@ body {
   opacity: 1;
   transform: translateX(0) scale(1);
 }
-
-/* Visual Stat Bars & Progress */
-#progress-bar {
-  width: 100%;
-  height: 8px;
-  background: rgba(255,255,255,0.15);
-  border-radius: 4px;
-  margin: 12px 0 20px 0;
-  overflow: hidden;
-}
-
-#progress-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #ffcc00, #ff8800);
-  transition: width 0.7s ease-out;
-  box-shadow: 0 0 10px rgba(255, 204, 0, 0.6);
-}
-
-#stat-bars {
-  margin: 10px 0;
-}
-
-.stat-bar {
-  display: flex;
-  align-items: center;
-  margin: 8px 0;
-  font-size: 14px;
-}
-
-.stat-bar span {
-  min-width: 100px;
-  font-weight: bold;
-}
-
-.bar-container {
-  flex: 1;
-  height: 14px;
-  background: rgba(255,255,255,0.12);
-  border-radius: 7px;
-  overflow: hidden;
-  margin-left: 12px;
-}
-
-.stat-fill {
-  height: 100%;
-  width: 0%;
-  transition: width 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-  border-radius: 7px;
-}
-
-#prof-bar { background: linear-gradient(90deg, #ff6b6b, #ff9e9e); }
-#emp-bar  { background: linear-gradient(90deg, #4ecdc4, #81e6d9); }
-#stab-bar { background: linear-gradient(90deg, #45b7d1, #a0e7ff); }
 @keyframes fadeUp {
   to {
     opacity: 1;
