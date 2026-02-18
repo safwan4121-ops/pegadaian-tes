@@ -328,8 +328,21 @@ function applyEffect(effect) {
 
 // ---------- 5) UPDATE STATS UI ----------
 function updateStatsUI() {
+  function updateStatsUI() {
   const statsEl = $("stats");
   statsEl.innerText = `Profesionalisme: ${gameState.profesionalisme} | Empati: ${gameState.empati} | Stabilitas: ${gameState.stabilitas}`;
+
+  // Total progress (asumsi max realistis sekitar +30 total poin)
+  const total = gameState.profesionalisme + gameState.empati + gameState.stabilitas;
+  const progressPercent = Math.min(100, Math.max(0, (total + 15) / 30 * 100));
+  $("progress-fill").style.width = progressPercent + "%";
+
+  // Individual stat bars (skala -5 sampai +10 → diubah jadi 0-100%)
+  const scale = (val) => Math.max(0, Math.min(100, (val + 5) / 15 * 100));
+  $("prof-bar").style.width = scale(gameState.profesionalisme) + "%";
+  $("emp-bar").style.width  = scale(gameState.empati) + "%";
+  $("stab-bar").style.width = scale(gameState.stabilitas) + "%";
+}
 }
 
 // ---------- 6) RENDER LOGIC ----------
