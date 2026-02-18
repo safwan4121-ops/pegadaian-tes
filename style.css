@@ -68,7 +68,7 @@ body {
   font-size: 20px;
 }
 
-#text {
+##text {
   flex-grow: 1;
   line-height: 1.6;
   margin-bottom: 20px;
