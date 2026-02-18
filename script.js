@@ -12,8 +12,8 @@ const defaultState = {
 };
 
 let gameState = { ...defaultState };
-let currentScene = "INTRO_INFO";
-let currentScene = "S1";
+INTRO_INFO: { ... },
+S1: { ... };
 
 // ---------- 2) CHARACTERS & ASSETS ----------
 const characters = {
