@@ -12,8 +12,7 @@ const defaultState = {
 };
 
 let gameState = { ...defaultState };
-INTRO_INFO: { ... },
-S1: { ... };
+let currentScene = "S1";
 
 // ---------- 2) CHARACTERS & ASSETS ----------
 const characters = {
@@ -40,31 +39,6 @@ function tryPlay(audioEl) {
 // ---------- 3) STORY DATA (FULL DIALOGS) ----------
 const story = {
   // S1 Intro
-  INTRO_INFO: {
-  text:
-`APA ITU PEGADAIAN?
-
-Pegadaian adalah lembaga keuangan yang memberikan pinjaman kepada masyarakat dengan sistem gadai. 
-Artinya, nasabah menyerahkan barang berharga sebagai jaminan dan menerima sejumlah uang sesuai nilai taksiran barang tersebut.
-
-Tujuan utama Pegadaian adalah membantu masyarakat memperoleh dana cepat tanpa prosedur rumit, 
-namun tetap berdasarkan prinsip kehati-hatian dan penilaian profesional.
-
-Dalam praktiknya, petugas Pegadaian harus menyeimbangkan:
-- Profesionalisme (mengikuti aturan dan standar penaksiran)
-- Empati (memahami kondisi nasabah)
-- Stabilitas (menjaga kesehatan keuangan cabang)
-
-Di game ini, kamu akan berperan sebagai petugas Pegadaian yang harus mengambil keputusan nyata.`,
-  character: null,
-  choices: [
-    {
-      text: "Saya Mengerti, Mulai Bermain",
-      next: "S1"
-    }
-  ]
-},
-
   S1: {
     text:
 `Pagi itu udara terasa sedikit dingin. Senin, hari pertama masa percobaanmu sebagai petugas layanan.
